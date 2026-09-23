@@ -55,7 +55,17 @@ tr:last-child td{border-bottom:0}
 .workout-tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .workout{display:none}
 .workout.active{display:block}
-.exercise{border:1px solid var(--line);border-radius:16px;padding:12px;margin:9px 0;background:#fff}
+.exercise{border:1px solid var(--line);border-radius:16px;padding:12px;margin:9px 0;background:#fff;overflow:hidden}
+.exercise-media{margin:-12px -12px 11px;background:#f8fafc;border-bottom:1px solid var(--line);display:flex;justify-content:center;align-items:center;min-height:180px;position:relative}
+.exercise-media img{display:block;width:180px;height:180px;object-fit:contain;background:#fff}
+.exercise-media .media-status{position:absolute;inset:auto 8px 7px 8px;font-size:9px;color:var(--muted);text-align:right;pointer-events:none}
+.exercise-media.no-media{min-height:70px}
+.exercise-media.no-media img{display:none}
+.exercise-media.no-media .media-status{position:static;padding:14px;text-align:center;font-size:11px}
+.exercise-media a{position:absolute;top:7px;right:7px;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:999px;padding:4px 7px;font-size:10px;color:var(--ink);text-decoration:none}
+.exercise-media a:hover{text-decoration:underline}
+.exercise-loading{font-size:11px;color:var(--muted);padding:18px;text-align:center}
+.media-credit{font-size:9px;color:var(--muted);margin-top:5px;text-align:center}
 .exercise.done{background:#f0fdf4;border-color:#86efac}
 .exercise-top{display:flex;gap:10px;align-items:flex-start}
 .check{width:25px;height:25px;flex:0 0 25px;accent-color:var(--good);margin-top:1px}
@@ -363,6 +373,11 @@ summary{font-weight:700;cursor:pointer}
 </div>
 
 <script>
+const DATASET_JSON = "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/data/exercises.json";
+const DATASET_BASE = "https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/";
+let exerciseDataset = [];
+let datasetReady = false;
+
 const workouts = {
   mon: [
     ["Machine chest press","3","6–10","2","2–3 min","Main chest mass"],
@@ -406,6 +421,80 @@ const workouts = {
 
 const prefix = "hypertrophyPlan_v1_";
 function key(day,i){return prefix+day+"_"+i}
+const mediaAliases = {
+  "Machine chest press":["machine chest press","chest press machine","lever chest press","chest press"],
+  "Neutral/medium-grip lat pulldown":["neutral grip lat pulldown","medium grip lat pulldown","lat pulldown","pulldown"],
+  "Incline machine chest press":["incline machine chest press","incline chest press machine","incline chest press"],
+  "Machine/cable lateral raise":["cable lateral raise","lateral raise machine","machine lateral raise","dumbbell lateral raise"],
+  "Chest-supported machine row":["chest supported row","chest supported machine row","machine row","seated row"],
+  "Cable triceps pressdown":["cable triceps pressdown","triceps pushdown","triceps pushdown rope attachment","triceps pushdown - rope attachment"],
+  "Cable/machine curl":["cable curl","machine curl","biceps curl","standing biceps cable curl"],
+  "Leg press":["leg press","45 degree leg press","lever leg press"],
+  "Leg extension":["leg extension","leg extension machine"],
+  "Seated leg curl":["seated leg curl","seated leg curl machine","leg curl"],
+  "Hip thrust machine":["hip thrust machine","machine hip thrust","hip thrust"],
+  "Seated calf raise":["seated calf raise","seated calf raise machine","calf raise"],
+  "Standing calf raise":["standing calf raise","standing calf raise machine","calf raise"],
+  "Cable crunch":["cable crunch","rope crunch","cable abdominal crunch"],
+  "Pallof press":["pallof press","cable pallof press","pallof"],
+  "Reverse pec-deck":["reverse pec deck","reverse pec-deck","rear delt machine","rear delt fly machine","rear delt fly"],
+  "Overhead cable triceps extension":["overhead cable triceps extension","overhead triceps extension with rope","triceps overhead extension with rope","cable overhead triceps extension"],
+  "Incline/cable curl":["incline cable curl","incline curl","cable curl","biceps curl"],
+  "Hack squat or machine squat":["hack squat","hack squat machine","machine squat"],
+  "Lying/seated leg curl":["lying leg curl","seated leg curl","leg curl"],
+  "Calf raise":["calf raise","standing calf raise","seated calf raise"],
+  "Dead bug":["dead bug","dead bug exercise"]
+};
+
+function normalizeName(v){
+  return String(v||"").toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]+/g," ").trim();
+}
+function exerciseMatch(name){
+  if(!datasetReady || !exerciseDataset.length) return null;
+  const candidates=[name,...(mediaAliases[name]||[])].map(normalizeName);
+  let best=null,bestScore=0;
+  for(const ex of exerciseDataset){
+    const en=normalizeName(ex.name);
+    for(const c of candidates){
+      let score=0;
+      if(en===c) score=100;
+      else if(en.includes(c) || c.includes(en)) score=85;
+      else {
+        const a=new Set(c.split(" ")), b=new Set(en.split(" "));
+        const overlap=[...a].filter(x=>b.has(x)).length;
+        score=overlap/Math.max(a.size,b.size)*70;
+        if(c.includes("lat pulldown") && en.includes("pulldown")) score+=12;
+        if(c.includes("triceps") && en.includes("triceps")) score+=10;
+        if(c.includes("calf") && en.includes("calf")) score+=10;
+        if(c.includes("leg curl") && en.includes("leg curl")) score+=10;
+        if(c.includes("lateral raise") && en.includes("lateral raise")) score+=10;
+        if(c.includes("leg press") && en.includes("leg press")) score+=10;
+      }
+      if(score>bestScore){bestScore=score;best=ex;}
+    }
+  }
+  return bestScore>=55?best:null;
+}
+function mediaFor(name){
+  const ex=exerciseMatch(name);
+  if(!ex) return null;
+  return {
+    gif: DATASET_BASE + ex.gif_url,
+    image: DATASET_BASE + ex.image,
+    source: "https://github.com/hasaneyldrm/exercises-dataset",
+    title: ex.name
+  };
+}
+function renderMedia(name){
+  const m=mediaFor(name);
+  if(!m) return `<div class="exercise-media no-media"><div class="media-status">Animation unavailable for this exercise</div></div>`;
+  return `<div class="exercise-media">
+    <img src="${m.gif}" alt="${name} exercise animation" loading="lazy" onerror="this.onerror=null;this.src='${m.image}'">
+    <a href="${m.source}" target="_blank" rel="noopener">Source</a>
+    <div class="media-status">Animation • ${m.title} • © Gym visual</div>
+  </div>`;
+}
+
 function renderWorkouts(){
   for(const day in workouts){
     const el=document.getElementById(day);
@@ -418,6 +507,7 @@ function renderWorkouts(){
       const div=document.createElement("div");
       div.className="exercise"+(checked?" done":"");
       div.innerHTML=`
+        ${renderMedia(x[0])}
         <div class="exercise-top">
           <input class="check" type="checkbox" ${checked?"checked":""} aria-label="Complete ${x[0]}">
           <div style="flex:1">
@@ -444,6 +534,19 @@ function renderWorkouts(){
     });
   }
   updateProgress();
+}
+async function loadExerciseDataset(){
+  try{
+    const response=await fetch(DATASET_JSON,{cache:"force-cache"});
+    if(!response.ok) throw new Error("Dataset request failed");
+    exerciseDataset=await response.json();
+    datasetReady=true;
+    renderWorkouts();
+  }catch(err){
+    console.warn("Exercise animation dataset could not be loaded",err);
+    datasetReady=false;
+    renderWorkouts();
+  }
 }
 function updateProgress(){
   const day=document.querySelector(".workout.active").id;
@@ -487,6 +590,7 @@ function toggleTimer(){
 }
 renderWorkouts();
 updateTimer();
+loadExerciseDataset();
 </script>
 </body>
 </html>

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Hypertrophy Plan — 4 Day Gym</title>
+<style>
+:root{
+  --bg:#f5f7fb;--card:#fff;--ink:#172033;--muted:#687386;--line:#e4e8ef;
+  --accent:#2563eb;--accent2:#dbeafe;--good:#15803d;--goodbg:#dcfce7;
+  --warn:#b45309;--warnbg:#fef3c7;--dark:#111827;
+  --radius:18px;--shadow:0 4px 18px rgba(15,23,42,.07);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.48}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{max-width:760px;margin:auto;padding-bottom:100px}
+header{background:linear-gradient(145deg,#111827,#1f2937);color:white;padding:22px 18px 20px;position:sticky;top:0;z-index:20;box-shadow:0 3px 14px rgba(0,0,0,.18)}
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+h1{font-size:24px;line-height:1.1;margin:0 0 6px}
+.subtitle{color:#cbd5e1;font-size:13px}
+.badge{background:#334155;color:#e2e8f0;border-radius:999px;padding:6px 9px;font-size:11px;white-space:nowrap}
+nav{display:flex;gap:8px;overflow-x:auto;padding:12px 14px;background:rgba(245,247,251,.97);position:sticky;top:78px;z-index:19;border-bottom:1px solid var(--line)}
+nav button{border:0;background:#fff;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:8px 12px;white-space:nowrap;font-weight:600;font-size:13px}
+nav button.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+main{padding:14px}
+section{scroll-margin-top:140px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+h2{font-size:20px;margin:0 0 10px}
+h3{font-size:16px;margin:18px 0 8px}
+p{margin:8px 0}
+ul,ol{padding-left:21px}
+li{margin:5px 0}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.hero{background:linear-gradient(135deg,#eff6ff,#fff);border:1px solid #bfdbfe}
+.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+.stat b{display:block;font-size:19px}
+.callout{border-left:4px solid var(--accent);background:#f8fbff;padding:12px 14px;border-radius:10px;margin:12px 0}
+.warning{border-left-color:#d97706;background:var(--warnbg)}
+.good{border-left-color:var(--good);background:var(--goodbg)}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;overflow:hidden;border:1px solid var(--line);border-radius:14px}
+th,td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:#f8fafc;font-weight:700}
+tr:last-child td{border-bottom:0}
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0}
+.workout-tabs{display:flex;gap:8px;overflow-x:auto;margin:0 0 12px}
+.workout-tabs button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 13px;font-weight:700;color:var(--muted)}
+.workout-tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.workout{display:none}
+.workout.active{display:block}
+.exercise{border:1px solid var(--line);border-radius:16px;padding:12px;margin:9px 0;background:#fff}
+.exercise.done{background:#f0fdf4;border-color:#86efac}
+.exercise-top{display:flex;gap:10px;align-items:flex-start}
+.check{width:25px;height:25px;flex:0 0 25px;accent-color:var(--good);margin-top:1px}
+.ex-name{font-weight:800;font-size:15px}
+.ex-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.ex-target{font-size:13px;margin-top:7px}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-top:10px}
+.controls label{font-size:10px;color:var(--muted);display:block;margin-bottom:3px}
+.controls input{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px;background:#fafafa}
+.timer{position:fixed;right:14px;bottom:15px;z-index:30;background:var(--dark);color:#fff;border-radius:999px;padding:10px 14px;box-shadow:0 6px 20px rgba(0,0,0,.22);display:flex;gap:8px;align-items:center}
+.timer button{border:0;background:#374151;color:#fff;border-radius:999px;padding:6px 9px}
+.timer button.primary{background:#2563eb}
+.progressbar{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:10px 0}
+.progressbar span{display:block;height:100%;background:#2563eb;width:0}
+.kpi{display:flex;justify-content:space-between;gap:12px;font-size:13px}
+.quote{font-size:16px;font-weight:700}
+details{border-top:1px solid var(--line);padding:10px 0}
+details:first-of-type{border-top:0}
+summary{font-weight:700;cursor:pointer}
+.footer-note{color:var(--muted);font-size:12px;text-align:center;padding:18px}
+@media(min-width:650px){
+  .app{padding-left:12px;padding-right:12px}
+  .statgrid{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="header-row">
+    <div>
+      <h1>Hypertrophy Plan</h1>
+      <div class="subtitle">4-day gym program • 60-minute sessions • Fuller, not shredded</div>
+    </div>
+    <div class="badge">77 kg • 175 cm</div>
+  </div>
+</header>
+
+<nav id="nav">
+  <button class="active" data-target="today">Today</button>
+  <button data-target="program">Program</button>
+  <button data-target="nutrition">Nutrition</button>
+  <button data-target="strategy">Strategy</button>
+  <button data-target="tracking">Tracking</button>
+</nav>
+
+<main>
+<section id="today">
+  <div class="card hero">
+    <div class="kpi"><strong>Current objective</strong><span>Lean gain / recomposition</span></div>
+    <div class="progressbar"><span id="todayProgress"></span></div>
+    <div class="kpi"><span id="doneText">0 exercises completed</span><span id="progressPct">0%</span></div>
+  </div>
+
+  <div class="card">
+    <h2>Gym rules</h2>
+    <ul>
+      <li><strong>RIR = repetitions in reserve.</strong> 10 reps @ 2 RIR means you finish believing you could have performed approximately two additional technically good repetitions.</li>
+      <li>Week 1: ~3 RIR. Week 2: ~2 RIR. Week 3 onward: ~1–2 RIR.</li>
+      <li>You don't need to deliberately reach failure on every set.</li>
+      <li>Once you reach the top of the rep range on every set with the prescribed RIR, increase the machine by the smallest practical increment.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Today's workout</h2>
+    <div class="workout-tabs">
+      <button class="active" data-workout="mon">Mon · Upper A</button>
+      <button data-workout="tue">Tue · Lower A</button>
+      <button data-workout="thu">Thu · Upper B</button>
+      <button data-workout="fri">Fri · Lower B</button>
+    </div>
+
+    <div id="mon" class="workout active"></div>
+    <div id="tue" class="workout"></div>
+    <div id="thu" class="workout"></div>
+    <div id="fri" class="workout"></div>
+  </div>
+</section>
+
+<section id="program">
+  <div class="card">
+    <h2>1. Phase recommendation: lean gain / recomposition</h2>
+    <p><strong>Start around maintenance calories, with a small surplus only if bodyweight is not increasing after several weeks.</strong></p>
+    <ul>
+      <li>Your estimated body fat from the photographs was roughly <strong>19–23%</strong>, although visual estimates have substantial error.</li>
+      <li>You specifically <strong>do not want to become much leaner</strong>.</li>
+      <li>You want substantially more muscle.</li>
+      <li>Your recent training stimulus has been relatively limited, especially for the back and legs.</li>
+      <li>You therefore have a reasonable opportunity to improve body composition without deliberately pushing calories high.</li>
+    </ul>
+    <div class="callout"><strong>First 8–12 weeks:</strong> Aim for approximately <strong>77–78 kg</strong>, rather than trying to force rapid weight gain.</div>
+  </div>
+
+  <div class="card">
+    <h2>2. Weekly structure</h2>
+    <table><thead><tr><th>Day</th><th>Focus</th></tr></thead><tbody>
+      <tr><td>Monday</td><td>Upper A — chest + lats + delts + arms</td></tr>
+      <tr><td>Tuesday</td><td>Lower A — quads + hamstrings + calves + core</td></tr>
+      <tr><td>Wednesday</td><td>Rest</td></tr>
+      <tr><td>Thursday</td><td>Upper B — back + upper chest + delts + arms</td></tr>
+      <tr><td>Friday</td><td>Lower B — legs + glutes + calves + core</td></tr>
+      <tr><td>Saturday</td><td>Rest / walking</td></tr>
+      <tr><td>Sunday</td><td>Rest / walking</td></tr>
+    </tbody></table>
+    <p class="small muted">The exact days can move; keep roughly one rest day between the second upper/lower pair if possible.</p>
+  </div>
+
+  <div class="card">
+    <h2>3. Weekly volume target</h2>
+    <div class="table-wrap"><table><thead><tr><th>Muscle</th><th>Direct sets/week</th><th>Priority</th></tr></thead><tbody>
+      <tr><td>Lateral delts</td><td>12</td><td>Very high</td></tr>
+      <tr><td>Lats</td><td>12</td><td>Very high</td></tr>
+      <tr><td>Upper back/rear delts</td><td>10</td><td>High</td></tr>
+      <tr><td>Upper chest</td><td>8–10</td><td>High</td></tr>
+      <tr><td>Chest overall</td><td>10–12</td><td>Moderate-high</td></tr>
+      <tr><td>Triceps</td><td>8–10</td><td>Moderate</td></tr>
+      <tr><td>Biceps</td><td>8–10</td><td>Moderate</td></tr>
+      <tr><td>Quads</td><td>10</td><td>Moderate</td></tr>
+      <tr><td>Hamstrings</td><td>8–10</td><td>Moderate</td></tr>
+      <tr><td>Glutes</td><td>6–8</td><td>Moderate</td></tr>
+      <tr><td>Calves</td><td>8</td><td>Moderate</td></tr>
+      <tr><td>Abs/core</td><td>6–8</td><td>Moderate</td></tr>
+      <tr><td>Upper traps</td><td>4–6</td><td>Low</td></tr>
+      <tr><td>Forearms</td><td>2–4</td><td>Low</td></tr>
+    </tbody></table></div>
+    <p>I would <strong>not immediately give you 20+ sets per muscle</strong>. You're returning to proper gym training after ~8 months away from equipment training, so your ability to recover from and benefit from resistance training will initially improve quickly.</p>
+  </div>
+
+  <div class="card">
+    <h2>4. The major change</h2>
+    <p>Your previous six months have essentially been:</p>
+    <ul><li>normal push-ups</li><li>wide push-ups</li><li>decline push-ups</li><li>little/no lat work</li><li>little/no leg work</li><li>little direct core work</li></ul>
+    <p>That is a very different stimulus from a hypertrophy program.</p>
+    <p>Your preference for machines is completely compatible with hypertrophy. The critical variable is that the exercises are progressively overloaded and taken sufficiently close to muscular failure over time.</p>
+  </div>
+</section>
+
+<section id="nutrition">
+  <div class="card">
+    <h2>Nutrition</h2>
+    <div class="statgrid">
+      <div class="stat"><span class="muted small">Start calories</span><b>~2,500</b><span class="small muted">kcal/day</span></div>
+      <div class="stat"><span class="muted small">Protein</span><b>140–165 g</b><span class="small muted">per day</span></div>
+      <div class="stat"><span class="muted small">Fat</span><b>60–80 g</b><span class="small muted">per day</span></div>
+      <div class="stat"><span class="muted small">Weight trend</span><b>0 to +0.15 kg</b><span class="small muted">per week</span></div>
+    </div>
+    <h3>Estimated energy requirement</h3>
+    <p>Using Mifflin-St Jeor:</p>
+    <p><strong>BMR ≈ 1,700 kcal/day</strong></p>
+    <p>With your activity level, a reasonable initial maintenance estimate is roughly <strong>~2,400–2,650 kcal/day</strong>.</p>
+    <p>This is only an estimate. Your actual maintenance is determined by your bodyweight trend.</p>
+    <h3>Adjustments</h3>
+    <ul>
+      <li>If weight is falling and gym performance isn't improving → add ~100–150 kcal.</li>
+      <li>If weight is increasing &gt;~0.2–0.25 kg/week and your waist is increasing noticeably → remove ~100–150 kcal.</li>
+    </ul>
+    <h3>Protein</h3>
+    <p>At 77 kg: <strong>140–165 g protein/day</strong>, approximately 1.8–2.1 g/kg/day.</p>
+    <p>You don't need enormous protein intake. Your whey shake is simply a convenient way to reach your daily protein target.</p>
+    <h3>Carbohydrates and fats</h3>
+    <p>I don't want you unnecessarily restricting carbohydrates while trying to grow.</p>
+    <p>For example, at 2,500 kcal with 150 g protein and 70 g fat:</p>
+    <ul><li>Protein = 600 kcal</li><li>Fat = 630 kcal</li><li>Remaining = 1,270 kcal</li><li>Carbohydrate ≈ 318 g</li></ul>
+    <p>You don't need to hit exactly 318 g. This simply demonstrates how the calculation works.</p>
+  </div>
+
+  <div class="card">
+    <h2>Creatine</h2>
+    <p>Assuming it's ordinary <strong>creatine monohydrate</strong>:</p>
+    <div class="callout good"><strong>3–5 g every day.</strong></div>
+    <p>You don't need to cycle it. The scale can also increase somewhat from increased muscle creatine/water storage, so don't interpret every kilogram gained after starting creatine as new muscle or fat.</p>
+  </div>
+
+  <div class="card">
+    <h2>Cardio and daily activity</h2>
+    <ul>
+      <li><strong>Daily movement:</strong> 7,000–10,000 steps/day as a practical target.</li>
+      <li><strong>Cardio:</strong> 2 × 20–30 minutes/week.</li>
+      <li>Easy/moderate: incline treadmill, elliptical, stationary bike, brisk walking.</li>
+      <li>Keep it sufficiently easy that it doesn't interfere with leg recovery.</li>
+    </ul>
+    <p>The purpose is cardiovascular fitness and maintaining activity—not trying to burn off your food.</p>
+  </div>
+</section>
+
+<section id="strategy">
+  <div class="card">
+    <h2>Your most important exercises</h2>
+    <details open><summary>A. Lateral raise</summary><p>This is probably the <strong>single most visually important isolation exercise</strong> in your program. Your clavicle width cannot be changed, but increasing the lateral deltoid can make the shoulder appear substantially broader. Use a machine or cable if available. Don't turn it into a trap exercise by shrugging the weight upward.</p></details>
+    <details><summary>B. Lat pulldown</summary><p>This is probably your biggest training gap. You currently do essentially no lat training. Your photos show a reasonable structural shoulder-to-waist foundation but relatively little visible lat flare. Learn to actually <strong>pull with the elbow toward the hip</strong>, rather than simply pulling the handle toward your chest. You don't need enormous weight.</p></details>
+    <details><summary>C. Chest-supported row</summary><p>I particularly like this for you because: it builds upper back; trains scapular retractors; reduces the amount of stabilization your lower back has to perform; suits your preference for controlled equipment; and complements the lat pulldown. This is also preferable to immediately throwing conventional barbell rows into your program given your occasional back discomfort.</p></details>
+    <details><summary>D. Incline machine press</summary><p>Your upper chest is one of the clearest opportunities from the visual analysis. Use a moderate incline rather than turning it into an overhead press. Think approximately <strong>20–35°</strong>.</p></details>
+  </div>
+
+  <div class="card">
+    <h2>Core and occasional back pain</h2>
+    <p>I would <strong>not assume your back pain is simply because your core is weak</strong>. That is possible, but the photograph cannot establish the cause.</p>
+    <p>We're going to train the trunk while avoiding unnecessary spinal loading:</p>
+    <ul><li>cable crunch</li><li>Pallof press</li><li>dead bug</li><li>controlled bracing</li><li>gradual loading</li></ul>
+    <div class="callout warning"><strong>Important:</strong> If an exercise causes actual back pain rather than ordinary muscular effort/fatigue, stop that exercise and substitute it.</div>
+  </div>
+
+  <div class="card">
+    <h2>Posture strategy</h2>
+    <p>I wouldn't create a giant "posture correction" routine.</p>
+    <p>Your normal training already addresses much of what I saw:</p>
+    <h3>More</h3>
+    <ul><li>chest-supported rows</li><li>reverse pec-deck</li><li>lateral raises</li><li>controlled pulldowns</li><li>core work</li></ul>
+    <h3>Less reliance on</h3>
+    <ul><li>endless push-ups</li><li>excessive pressing volume</li><li>unsupported bent-over pulling when fatigued</li></ul>
+    <p>The goal isn't to permanently "pin your shoulders back." You want <strong>strong, controllable shoulders and trunk</strong>, not a forced posture.</p>
+  </div>
+
+  <div class="card">
+    <h2>Progression</h2>
+    <p>This is where your new gym program needs to differ dramatically from your push-up training.</p>
+    <h3>Double progression</h3>
+    <p>Suppose your machine chest press is <strong>3 × 6–10</strong>.</p>
+    <p>Start: 60 kg — 10, 9, 8</p>
+    <p>Next: 60 kg — 10, 10, 9</p>
+    <p>Then: 60 kg — 10, 10, 10</p>
+    <p>Once you can reach the <strong>top of the rep range on every set with the prescribed RIR</strong>, increase the machine by the smallest practical increment.</p>
+    <p>Then perhaps: 65 kg — 8, 8, 7, and build again.</p>
+  </div>
+
+  <div class="card">
+    <h2>Deloads</h2>
+    <p>Don't automatically deload every fourth week.</p>
+    <p>Continue progressing until you see several of these simultaneously:</p>
+    <ul><li>performance dropping</li><li>persistent fatigue</li><li>unusual joint soreness</li><li>motivation substantially falling</li><li>pumps/performance deteriorating</li><li>inability to recover between sessions</li></ul>
+    <p>Then take approximately <strong>one easier week</strong>: reduce sets by ~30–50%, maintain moderate loads, and stay ~3–4 RIR.</p>
+    <p>For you, that might happen roughly every <strong>6–10 weeks</strong>, but it should be driven by fatigue rather than the calendar.</p>
+  </div>
+</section>
+
+<section id="tracking">
+  <div class="card">
+    <h2>Progress tracking</h2>
+    <h3>Every morning</h3>
+    <p>After waking and using the bathroom: <strong>bodyweight</strong>.</p>
+    <p>Don't care about an individual day's value. Use the <strong>7-day average</strong>.</p>
+    <h3>Every 2 weeks</h3>
+    <ul><li>waist at navel</li><li>chest</li><li>relaxed upper arm</li><li>flexed upper arm</li><li>thigh</li><li>calf</li><li>shoulder circumference if you can measure it consistently</li></ul>
+    <p>Don't flex for the measurements except where explicitly specified.</p>
+    <h3>Every 8–12 weeks</h3>
+    <p>Repeat the photographs:</p>
+    <ul>
+      <li>same room</li><li>same camera</li><li>same distance</li><li>same camera height</li><li>same lighting</li><li>same shorts</li><li>relaxed</li><li>arms naturally hanging</li>
+    </ul>
+    <p>Side: both sides if possible. Back: relaxed and rear double-biceps. Also take one set flexed if you want to assess muscular development.</p>
+  </div>
+
+  <div class="card">
+    <h2>What to expect over the first 12 weeks</h2>
+    <h3>Weeks 1–3</h3>
+    <p>Your main improvement will be <strong>learning the machines and establishing progressive overload</strong>. Don't chase maximum weight.</p>
+    <h3>Weeks 4–8</h3>
+    <p>You'll likely see noticeable increases in machine loads, repetitions, pumps, shoulder/chest fullness, and back engagement.</p>
+    <h3>Weeks 8–12</h3>
+    <p>This is when photographic differences may start becoming meaningful, particularly because you're moving from almost no lat training to ~12 quality sets/week.</p>
+    <p>I would reassess the program around <strong>week 10–12</strong>.</p>
+  </div>
+
+  <div class="card">
+    <h2>The "1.5–2× current muscle volume" goal</h2>
+    <p>If by this you mean <strong>your muscles looking 50–100% larger</strong>, that is not a realistic short-term target for someone who already has two years of training.</p>
+    <p>You can, however, make a <strong>very significant visual transformation</strong> because your recent training has been highly incomplete.</p>
+    <p>The biggest change may come from:</p>
+    <div class="callout quote">Push-ups → properly loaded chest + back + shoulders + legs + arms</div>
+    <p>rather than simply doing more push-ups.</p>
+  </div>
+
+  <div class="card">
+    <h2>The key priorities for your physique</h2>
+    <ol>
+      <li><strong>Train lats twice every week.</strong> You currently have a major pulling deficit.</li>
+      <li><strong>Train lateral delts twice every week.</strong> This is probably the most direct way to improve your shoulder-to-waist visual ratio.</li>
+      <li><strong>Bring upper chest up.</strong> Incline machine pressing gets dedicated volume.</li>
+      <li><strong>Start properly training legs.</strong> You've essentially left a large amount of potential muscle mass untrained for ~8 months.</li>
+      <li><strong>Keep your waist roughly where it is while gaining muscle.</strong> Don't chase either extreme—neither aggressive cutting nor aggressive bulking matches your stated aesthetic goal.</li>
+    </ol>
+    <p>And importantly, <strong>you don't need to abandon machines</strong> to accomplish any of this. Your preference for controlled, muscle-specific exercises is compatible with the evidence-based approach; the critical variable is that the exercises are progressively overloaded and taken sufficiently close to muscular failure over time.</p>
+  </div>
+
+  <div class="card">
+    <h2>Why this plan fits you</h2>
+    <p>You don't need to force yourself into traditional barbell movements. A well-designed machine/cable program lets you train the muscles you want with less technical complexity, while still providing progressive overload.</p>
+    <p>Your biggest untapped opportunities are <strong>lats, lateral delts, upper back, upper chest and legs</strong>.</p>
+  </div>
+</section>
+
+<div class="footer-note">
+  Built as a gym-use interface from your personalized plan. Workout completion and exercise notes are stored locally in this browser.
+</div>
+</main>
+
+<div class="timer">
+  <span id="timerDisplay">01:30</span>
+  <button onclick="setTimer(60)">60s</button>
+  <button class="primary" onclick="setTimer(90)">90s</button>
+  <button onclick="setTimer(120)">120s</button>
+  <button onclick="toggleTimer()">▶</button>
+</div>
+</div>
+
+<script>
+const workouts = {
+  mon: [
+    ["Machine chest press","3","6–10","2","2–3 min","Main chest mass"],
+    ["Neutral/medium-grip lat pulldown","3","8–12","1–2","2 min","Lat width priority"],
+    ["Incline machine chest press","2","8–12","1–2","2 min","Upper chest"],
+    ["Machine/cable lateral raise","3","12–20","1–2","60–90 s","Shoulder width priority"],
+    ["Chest-supported machine row","2","8–12","1–2","2 min","Upper back + lats"],
+    ["Cable triceps pressdown","2","10–15","1","60–90 s","Triceps"],
+    ["Cable/machine curl","2","10–15","1","60–90 s","Biceps"]
+  ],
+  tue: [
+    ["Leg press","3","8–12","2","2–3 min","Quad mass without requiring barbell squat technique"],
+    ["Leg extension","2","10–15","1–2","90 s","Quad isolation"],
+    ["Seated leg curl","3","8–12","1–2","2 min","Hamstrings"],
+    ["Hip thrust machine","2","8–12","1–2","2 min","Glutes"],
+    ["Seated calf raise","2","10–15","1–2","90 s","Soleus"],
+    ["Standing calf raise","2","8–15","1–2","90 s","Gastrocnemius"],
+    ["Cable crunch","2","10–15","1–2","60–90 s","Rectus abdominis"],
+    ["Pallof press","2","10–15/side","2","60 s","Trunk stability"]
+  ],
+  thu: [
+    ["Chest-supported row","3","8–12","1–2","2 min","Back thickness + posture"],
+    ["Lat pulldown","3","8–12","1–2","2 min","Lat width"],
+    ["Incline machine press","3","8–12","1–2","2 min","Upper chest"],
+    ["Cable lateral raise","3","12–20","1–2","60–90 s","Lateral delt"],
+    ["Reverse pec-deck","2","12–20","1–2","60–90 s","Rear delts/scapular musculature"],
+    ["Overhead cable triceps extension","2","10–15","1–2","60–90 s","Long-head triceps"],
+    ["Incline/cable curl","2","10–15","1–2","60–90 s","Biceps"]
+  ],
+  fri: [
+    ["Hack squat or machine squat","3","8–12","2","2–3 min","Quad mass"],
+    ["Leg press","2","10–15","1–2","2 min","Additional quad volume"],
+    ["Lying/seated leg curl","3","10–15","1–2","90–120 s","Hamstrings"],
+    ["Hip thrust machine","2","10–15","1–2","2 min","Glutes"],
+    ["Leg extension","2","12–15","1","90 s","Quad isolation"],
+    ["Calf raise","4","10–15","1–2","60–90 s","Calves"],
+    ["Cable crunch","2","10–15","1–2","60–90 s","Abs"],
+    ["Dead bug","2","8–12/side","2","45–60 s","Core control"]
+  ]
+};
+
+const prefix = "hypertrophyPlan_v1_";
+function key(day,i){return prefix+day+"_"+i}
+function renderWorkouts(){
+  for(const day in workouts){
+    const el=document.getElementById(day);
+    el.innerHTML="";
+    workouts[day].forEach((x,i)=>{
+      const checked=localStorage.getItem(key(day,i))==="1";
+      const note=localStorage.getItem(key(day,i)+"_note")||"";
+      const weight=localStorage.getItem(key(day,i)+"_weight")||"";
+      const reps=localStorage.getItem(key(day,i)+"_reps")||"";
+      const div=document.createElement("div");
+      div.className="exercise"+(checked?" done":"");
+      div.innerHTML=`
+        <div class="exercise-top">
+          <input class="check" type="checkbox" ${checked?"checked":""} aria-label="Complete ${x[0]}">
+          <div style="flex:1">
+            <div class="ex-name">${x[0]}</div>
+            <div class="ex-meta">${x[1]} sets • ${x[2]} reps • ${x[3]} RIR • ${x[4]} rest</div>
+            <div class="ex-target"><strong>Target:</strong> ${x[5]}</div>
+            <div class="controls">
+              <div><label>LOAD</label><input class="weight" inputmode="decimal" placeholder="kg" value="${weight}"></div>
+              <div><label>REPS</label><input class="reps" inputmode="numeric" placeholder="actual" value="${reps}"></div>
+              <div><label>NOTE</label><input class="note" placeholder="optional" value="${note}"></div>
+            </div>
+          </div>
+        </div>`;
+      const cb=div.querySelector(".check");
+      cb.addEventListener("change",()=>{
+        localStorage.setItem(key(day,i),cb.checked?"1":"0");
+        div.classList.toggle("done",cb.checked);
+        updateProgress();
+      });
+      div.querySelector(".weight").addEventListener("input",e=>localStorage.setItem(key(day,i)+"_weight",e.target.value));
+      div.querySelector(".reps").addEventListener("input",e=>localStorage.setItem(key(day,i)+"_reps",e.target.value));
+      div.querySelector(".note").addEventListener("input",e=>localStorage.setItem(key(day,i)+"_note",e.target.value));
+      el.appendChild(div);
+    });
+  }
+  updateProgress();
+}
+function updateProgress(){
+  const day=document.querySelector(".workout.active").id;
+  const total=workouts[day].length;
+  let done=0;
+  workouts[day].forEach((_,i)=>{if(localStorage.getItem(key(day,i))==="1")done++});
+  document.getElementById("todayProgress").style.width=(done/total*100)+"%";
+  document.getElementById("doneText").textContent=`${done} of ${total} exercises completed`;
+  document.getElementById("progressPct").textContent=Math.round(done/total*100)+"%";
+}
+document.querySelectorAll(".workout-tabs button").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".workout-tabs button").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".workout").forEach(w=>w.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.workout).classList.add("active");
+    updateProgress();
+  });
+});
+document.querySelectorAll("nav button").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.target).scrollIntoView({behavior:"smooth"});
+  });
+});
+let seconds=90,timerRunning=false,interval=null;
+function updateTimer(){
+  const m=String(Math.floor(seconds/60)).padStart(2,"0");
+  const s=String(seconds%60).padStart(2,"0");
+  document.getElementById("timerDisplay").textContent=`${m}:${s}`;
+}
+function setTimer(n){seconds=n;updateTimer();if(!timerRunning){}}
+function toggleTimer(){
+  if(timerRunning){clearInterval(interval);timerRunning=false;return}
+  timerRunning=true;
+  interval=setInterval(()=>{
+    seconds--;updateTimer();
+    if(seconds<=0){clearInterval(interval);timerRunning=false;navigator.vibrate?.([200,100,200]);}
+  },1000);
+}
+renderWorkouts();
+updateTimer();
+</script>
+</body>
+</html>

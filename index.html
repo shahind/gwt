@@ -1,434 +1,592 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Gym Workout Tracker</title>
-    
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Outfit', 'sans-serif'],
-                    },
-                    colors: {
-                        brand: {
-                            400: '#00F0FF', // Neon Cyan
-                            500: '#00FFA3', // Neon Emerald
-                        },
-                        surface: {
-                            100: 'rgba(255, 255, 255, 0.02)',
-                            200: 'rgba(255, 255, 255, 0.05)',
-                            300: 'rgba(255, 255, 255, 0.1)',
-                        },
-                        app: '#05070A' // Deep void black
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <style>
-        body {
-            background-color: #05070A;
-            color: #ffffff;
-            -webkit-tap-highlight-color: transparent;
-            overflow-x: hidden;
-        }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        
-        .glass-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5);
-        }
-
-        .glow-completed {
-            box-shadow: 0 0 30px rgba(0, 255, 163, 0.1), inset 0 0 20px rgba(0, 255, 163, 0.05);
-            border-color: rgba(0, 255, 163, 0.2);
-        }
-
-        .ambient-orb {
-            position: fixed;
-            border-radius: 50%;
-            filter: blur(120px);
-            z-index: -1;
-            opacity: 0.3;
-            animation: pulse 10s infinite alternate ease-in-out;
-            pointer-events: none;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1) translate(0, 0); opacity: 0.2; }
-            100% { transform: scale(1.1) translate(30px, -30px); opacity: 0.4; }
-        }
-        
-        .exercise-done-text {
-            text-decoration: line-through;
-            opacity: 0.4;
-        }
-
-        .input-glass {
-            background: rgba(0,0,0,0.3);
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#17231e">
+  <meta name="description" content="A simple offline workout log with per-set tracking, rest timers, and weekly progress.">
+  <title>Gym Workout Tracker</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png" type="image/png">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f2;
+      --paper: #ffffff;
+      --ink: #17231e;
+      --muted: #6a776f;
+      --line: #e0e7e0;
+      --green: #2f6b4f;
+      --green-dark: #204b37;
+      --green-soft: #e7f1e9;
+      --lime: #d9f078;
+      --amber: #c27b28;
+      --shadow: 0 9px 26px rgba(24, 43, 32, .055);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html { background: var(--bg); scroll-behavior: smooth; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--ink); background: var(--bg);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px; -webkit-font-smoothing: antialiased;
+      padding-bottom: calc(88px + env(safe-area-inset-bottom));
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #95be9d; outline-offset: 2px; }
+    .app-shell { width: min(100%, 760px); margin: 0 auto; padding: 18px 16px 28px; }
+    .app-header { display: flex; align-items: center; gap: 11px; margin-bottom: 22px; }
+    .brand-mark { width: 43px; height: 43px; flex: 0 0 43px; display: grid; place-items: center; background: var(--ink); color: var(--lime); border-radius: 15px; box-shadow: var(--shadow); }
+    .brand-mark svg { width: 25px; height: 25px; }
+    .brand-copy { min-width: 0; }
+    .eyebrow { margin: 0 0 2px; text-transform: uppercase; letter-spacing: .13em; font-weight: 800; font-size: 9px; color: var(--muted); }
+    h1 { margin: 0; font-size: 23px; letter-spacing: -.045em; line-height: 1; }
+    .offline-pill { display: inline-flex; gap: 6px; align-items: center; margin-left: auto; background: var(--paper); border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 7px 9px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .offline-dot { width: 6px; height: 6px; background: #5f986d; border-radius: 50%; }
+    .page { animation: page-in .18s ease-out; }
+    @keyframes page-in { from { opacity: .65; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+    .section-heading { display: flex; justify-content: space-between; align-items: end; gap: 10px; margin: 25px 2px 12px; }
+    .section-heading h2 { margin: 0; font-size: 17px; letter-spacing: -.035em; }
+    .section-heading p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .text-link { padding: 4px 0; border: 0; background: transparent; color: var(--green); font-weight: 800; font-size: 12px; }
+    .week-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+    .stat-card { padding: 14px 13px 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 4px 14px rgba(24,43,32,.025); min-width: 0; }
+    .stat-label { color: var(--muted); font-size: 10px; line-height: 1.3; font-weight: 750; }
+    .stat-value { font-size: 24px; letter-spacing: -.05em; line-height: 1.2; font-weight: 850; margin: 7px 0 2px; }
+    .stat-foot { color: var(--muted); font-size: 10px; }
+    .session-hero { position: relative; overflow: hidden; color: #fff; background: var(--ink); border-radius: 23px; padding: 22px 20px 18px; box-shadow: var(--shadow); }
+    .session-hero::after { content: ""; width: 170px; height: 170px; border-radius: 50%; position: absolute; right: -75px; top: -89px; background: rgba(217,240,120,.10); border: 1px solid rgba(217,240,120,.25); }
+    .hero-kicker { margin: 0 0 7px; color: var(--lime); text-transform: uppercase; letter-spacing: .12em; font-size: 10px; font-weight: 850; }
+    .session-hero h2 { margin: 0; font-size: clamp(26px, 7vw, 35px); letter-spacing: -.06em; line-height: 1.05; }
+    .hero-sub { margin: 8px 0 17px; color: #c5d1c9; font-size: 12px; }
+    .hero-progress-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: #d6e1d9; font-size: 11px; margin-bottom: 7px; }
+    .hero-progress-row strong { color: white; font-size: 12px; }
+    .progress-track { width: 100%; height: 6px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.17); }
+    .progress-fill { height: 100%; border-radius: inherit; background: var(--lime); transition: width .2s ease; }
+    .exercise-list { display: grid; gap: 12px; }
+    .exercise-card { padding: 15px 14px 13px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 3px 12px rgba(24,43,32,.025); }
+    .exercise-top { display: flex; align-items: flex-start; gap: 9px; justify-content: space-between; }
+    .exercise-title-wrap { min-width: 0; }
+    .exercise-card h3 { margin: 0; font-size: 14px; line-height: 1.35; letter-spacing: -.025em; }
+    .target-muscle { margin: 4px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .muscle-pill { flex: 0 0 auto; max-width: 100px; background: var(--green-soft); color: var(--green-dark); font-size: 9px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; border-radius: 8px; padding: 6px 7px; }
+    .prescription-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 12px 0 9px; }
+    .prescription { font-size: 11px; font-weight: 800; color: #34443a; }
+    .rest-button { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--line); background: #f7f9f6; color: #4d5e53; border-radius: 9px; padding: 6px 8px; font-weight: 750; font-size: 10px; }
+    .rest-button svg { width: 12px; height: 12px; }
+    .last-performance { margin: 0 0 10px; min-height: 14px; font-size: 10px; color: var(--muted); }
+    .sets-header, .set-row { display: grid; grid-template-columns: 25px 26px minmax(0, 1fr) minmax(0, .83fr) 47px; gap: 7px; align-items: center; }
+    .sets-header { padding: 0 3px 5px; color: #829087; text-transform: uppercase; letter-spacing: .07em; font-size: 9px; font-weight: 850; }
+    .set-row { min-height: 43px; padding: 5px 3px; border-top: 1px solid #eef1ed; }
+    .set-row.is-done { background: #f3f8f1; border-radius: 9px; border-top-color: transparent; }
+    .set-check { width: 23px; height: 23px; accent-color: var(--green); justify-self: center; cursor: pointer; }
+    .set-number { color: #6e7b72; font-size: 11px; font-weight: 750; }
+    .field-wrap { min-width: 0; }
+    .set-input, .rir-select { width: 100%; min-width: 0; height: 31px; background: #fbfcfa; color: var(--ink); border: 1px solid #dfe6de; border-radius: 8px; padding: 0 7px; font-size: 12px; font-weight: 700; }
+    .set-input::placeholder { color: #a0aaa2; font-size: 10px; font-weight: 600; }
+    .rir-select { padding: 0 4px; font-size: 11px; }
+    .exercise-footer { display: flex; justify-content: flex-end; padding-top: 8px; }
+    .small-action { border: 0; background: transparent; padding: 3px 0; color: var(--green); font-size: 10px; font-weight: 800; }
+    .note { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 10px 2px 0; }
+    .rest-day { text-align: center; background: var(--paper); border: 1px solid var(--line); border-radius: 22px; padding: 30px 21px; }
+    .rest-icon { width: 57px; height: 57px; display: grid; place-items: center; border-radius: 19px; color: var(--green); background: var(--green-soft); margin: 0 auto 15px; }
+    .rest-icon svg { width: 28px; height: 28px; }
+    .rest-day h2 { margin: 0; font-size: 25px; letter-spacing: -.05em; }
+    .rest-day p { color: var(--muted); line-height: 1.5; font-size: 12px; max-width: 300px; margin: 9px auto 17px; }
+    .next-card { text-align: left; background: #f7faf6; border: 1px solid var(--line); border-radius: 14px; padding: 13px; }
+    .next-card small { color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-size: 9px; font-weight: 850; }
+    .next-card strong { display: block; margin: 4px 0 3px; font-size: 15px; }
+    .next-card span { color: var(--muted); font-size: 11px; }
+    .primary-button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; border: 0; border-radius: 12px; background: var(--green); color: white; min-height: 42px; padding: 0 16px; font-size: 12px; font-weight: 800; }
+    .primary-button:hover { background: var(--green-dark); }
+    .secondary-button { display: inline-flex; justify-content: center; align-items: center; border: 1px solid var(--line); border-radius: 11px; background: var(--paper); color: var(--ink); min-height: 39px; padding: 0 13px; font-size: 11px; font-weight: 800; }
+    .section-intro { margin: -2px 2px 17px; color: var(--muted); line-height: 1.5; font-size: 12px; }
+    .plan-groups { display: grid; gap: 12px; }
+    .plan-group { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+    .plan-group summary { display: flex; justify-content: space-between; align-items: center; list-style: none; cursor: pointer; padding: 15px; gap: 10px; }
+    .plan-group summary::-webkit-details-marker { display: none; }
+    .plan-day { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .09em; font-weight: 850; margin-bottom: 4px; }
+    .plan-group summary strong { display: block; font-size: 15px; letter-spacing: -.02em; }
+    .plan-group summary small { display: block; margin-top: 3px; font-size: 10px; color: var(--muted); }
+    .summary-chevron { color: var(--muted); width: 16px; height: 16px; flex: 0 0 auto; transition: transform .15s; }
+    details[open] .summary-chevron { transform: rotate(180deg); }
+    .plan-table { padding: 0 15px 15px; }
+    .plan-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 10px 0; border-top: 1px solid #edf0ec; align-items: start; }
+    .plan-line strong { display: block; font-size: 11px; line-height: 1.35; }
+    .plan-line small { display: block; color: var(--muted); font-size: 10px; line-height: 1.4; margin-top: 3px; }
+    .plan-dose { white-space: nowrap; text-align: right; color: var(--green-dark); font-weight: 800; font-size: 10px; }
+    .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 16px; box-shadow: 0 3px 12px rgba(24,43,32,.025); }
+    .panel h3 { margin: 0; font-size: 14px; }
+    .select-label { display: block; margin: 15px 0 6px; color: var(--muted); font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .08em; }
+    .wide-select { width: 100%; height: 42px; border: 1px solid var(--line); border-radius: 11px; padding: 0 11px; background: #fbfcfa; color: var(--ink); font-weight: 700; font-size: 12px; }
+    .trend-wrap { margin-top: 16px; padding: 10px 8px 4px; background: #f7faf6; border-radius: 13px; border: 1px solid #edf1eb; }
+    .trend-title { display: flex; justify-content: space-between; align-items: center; margin: 2px 3px 4px; color: var(--muted); font-size: 10px; font-weight: 750; }
+    .trend-title strong { color: var(--ink); font-size: 11px; }
+    .trend-chart { width: 100%; display: block; height: 150px; overflow: visible; }
+    .empty-state { padding: 25px 18px; text-align: center; background: #f8faf7; border: 1px dashed #d8e1d7; border-radius: 13px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .entries { display: grid; gap: 9px; margin-top: 12px; }
+    .entry-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 12px 0; border-bottom: 1px solid #edf0ec; }
+    .entry-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .entry-date { font-size: 11px; font-weight: 850; }
+    .entry-detail { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .entry-result { text-align: right; font-size: 12px; font-weight: 850; white-space: nowrap; }
+    .entry-result small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; font-weight: 650; }
+    .history-list { display: grid; gap: 11px; }
+    .history-card { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; padding: 14px; }
+    .history-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .history-head h3 { margin: 0; font-size: 13px; }
+    .history-head p { margin: 4px 0 0; color: var(--muted); font-size: 10px; }
+    .history-badge { background: var(--green-soft); color: var(--green-dark); border-radius: 7px; padding: 5px 7px; font-size: 9px; font-weight: 850; white-space: nowrap; }
+    .history-badge.in-progress { background: #f7eedf; color: #865415; }
+    .history-progress { display: flex; justify-content: space-between; gap: 10px; margin: 12px 0 6px; color: var(--muted); font-size: 10px; }
+    .history-track { height: 5px; background: #edf1eb; border-radius: 99px; overflow: hidden; }
+    .history-track span { display: block; height: 100%; background: var(--green); border-radius: inherit; }
+    .history-exercises { margin-top: 10px; display: grid; gap: 6px; }
+    .history-exercise { display: flex; justify-content: space-between; gap: 10px; font-size: 10px; line-height: 1.4; }
+    .history-exercise span:first-child { color: var(--muted); }
+    .history-exercise strong { text-align: right; }
+    .timer-dock { position: fixed; z-index: 20; bottom: calc(77px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: min(calc(100% - 24px), 520px); background: #17231e; color: white; border-radius: 15px; padding: 11px 12px; box-shadow: 0 14px 34px rgba(11,24,16,.25); display: flex; align-items: center; gap: 10px; }
+    .timer-dock[hidden] { display: none; }
+    .timer-icon { width: 34px; height: 34px; display: grid; place-items: center; flex: 0 0 34px; border-radius: 11px; color: var(--lime); background: rgba(217,240,120,.12); }
+    .timer-icon svg { width: 18px; height: 18px; }
+    .timer-main { min-width: 0; flex: 1; }
+    .timer-label { color: #c5d1c9; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; font-weight: 850; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .timer-value { font-size: 21px; line-height: 1.15; font-weight: 850; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+    .timer-controls { display: flex; gap: 5px; align-items: center; }
+    .timer-controls button { border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.08); color: white; border-radius: 8px; min-width: 34px; height: 32px; padding: 0 8px; font-size: 10px; font-weight: 800; }
+    .timer-controls .timer-dismiss { color: var(--ink); background: var(--lime); border-color: var(--lime); }
+    .bottom-nav { position: fixed; z-index: 15; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; padding: 7px 10px calc(7px + env(safe-area-inset-bottom)); background: rgba(255,255,255,.95); border-top: 1px solid var(--line); backdrop-filter: blur(16px); }
+    .nav-inner { width: min(100%, 530px); display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+    .nav-button { border: 0; background: transparent; color: #849087; min-height: 51px; padding: 5px 2px 3px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px; border-radius: 12px; font-size: 9px; font-weight: 800; }
+    .nav-button svg { width: 19px; height: 19px; stroke-width: 1.9; }
+    .nav-button.active { color: var(--green-dark); background: var(--green-soft); }
+    .save-status { color: var(--muted); font-size: 10px; text-align: center; margin: 20px 0 3px; }
+    .toast { position: fixed; top: calc(12px + env(safe-area-inset-top)); left: 50%; transform: translate(-50%, -8px); opacity: 0; pointer-events: none; z-index: 40; background: var(--ink); color: white; border-radius: 99px; padding: 10px 15px; font-size: 11px; font-weight: 750; box-shadow: var(--shadow); transition: opacity .15s, transform .15s; white-space: nowrap; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .footer-note { color: #8a958d; font-size: 10px; line-height: 1.5; text-align: center; margin: 22px 10px 0; }
+    @media (min-width: 600px) {
+      .app-shell { padding: 27px 24px 32px; }
+      .app-header { margin-bottom: 28px; }
+      .exercise-list { grid-template-columns: repeat(2, minmax(0,1fr)); align-items: start; }
+      .exercise-card { height: 100%; }
+      .session-hero { padding: 25px; }
+      .week-overview { gap: 12px; }
+      .stat-card { padding: 17px; }
+      .timer-dock { bottom: 88px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+  </style>
 </head>
 <body>
-    <div id="root"></div>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 8v8M7 5v14M17 5v14M20 8v8M7 12h10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+      </div>
+      <div class="brand-copy"><p class="eyebrow">Your training log</p><h1>GymWorkoutTracker</h1></div>
+      <div class="offline-pill"><span class="offline-dot"></span><span id="connectionLabel">Local save on</span></div>
+    </header>
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
+    <main id="mainView" class="page" aria-live="polite"></main>
+    <p class="footer-note">Your workout data stays on this device. Export a backup regularly if you switch phones or clear browser data.</p>
+  </div>
 
-        const STORAGE_KEY = 'elite_fitness_protocol_v3';
-        const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  <section class="timer-dock" id="timerDock" hidden aria-live="polite">
+    <div class="timer-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 9v4l2.7 1.8M9 2h6M12 2v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+    <div class="timer-main"><div class="timer-label" id="timerLabel">Rest timer</div><div class="timer-value" id="timerValue">02:00</div></div>
+    <div class="timer-controls" id="timerControls"></div>
+  </section>
 
-        const initialSeedData = {
-            "Thursday": {
-                isRest: false,
-                groups: [
-                    { name: "Chest", exercises: [
-                        { name: "Chest press", weight: "100", reps: "10-12", sets: [false, false, false] },
-                        { name: "Fly", weight: "90", reps: "10-12", sets: [false, false, false] },
-                        { name: "MTS chest press", weight: "100", reps: "10-12", sets: [false, false, false] }
-                    ]},
-                    { name: "Biceps", exercises: [
-                        { name: "Biceps curl", weight: "60", reps: "8-10", sets: [false, false, false] },
-                        { name: "Arm curl", weight: "50", reps: "10-12", sets: [false, false, false] }
-                    ]},
-                    { name: "Abs", exercises: [
-                        { name: "Rotary torso", weight: "200", reps: "12-10-8", sets: [false, false, false] }
-                    ]}
-                ]
-            },
-            "Friday": { isRest: true, groups: [] },
-            "Saturday": {
-                isRest: false,
-                groups: [
-                    { name: "Shoulder", exercises: [
-                        { name: "Reverse fly", weight: "0", reps: "10", sets: [false, false, false] },
-                        { name: "Shoulder press", weight: "0", reps: "10", sets: [false, false, false] }
-                    ]},
-                    { name: "Triceps", exercises: [
-                        { name: "Triceps press", weight: "0", reps: "10", sets: [false, false, false] },
-                        { name: "Cable", weight: "0", reps: "10", sets: [false, false, false] }
-                    ]},
-                    { name: "Abs", exercises: [
-                        { name: "Rotary torso", weight: "200", reps: "12-10-8", sets: [false, false, false] },
-                        { name: "Abdominal machine", weight: "0", reps: "10", sets: [false, false, false] }
-                    ]}
-                ]
-            },
-            "Sunday": {
-                isRest: false,
-                groups: [
-                    { name: "Back", exercises: [
-                        { name: "Back extension", weight: "0", reps: "10", sets: [false, false, false] },
-                        { name: "MTS front pull down", weight: "0", reps: "10", sets: [false, false, false] }
-                    ]},
-                    { name: "Lat", exercises: [
-                        { name: "Sitter row", weight: "0", reps: "10", sets: [false, false, false] },
-                        { name: "Lat pull down", weight: "0", reps: "10", sets: [false, false, false] }
-                    ]},
-                    { name: "Abs", exercises: [
-                        { name: "Rotary torso", weight: "200", reps: "12-10-8", sets: [false, false, false] }
-                    ]}
-                ]
-            },
-            "Monday": { isRest: true, groups: [] },
-            "Tuesday": {
-                isRest: false,
-                groups: [
-                    { name: "Leg", exercises: [
-                        { name: "Lex extension", weight: "0", reps: "10", sets: [false, false, false] },
-                        { name: "Seated leg curl", weight: "0", reps: "10", sets: [false, false, false] },
-                        { name: "Leg press", weight: "0", reps: "10", sets: [false, false, false] },
-                        { name: "Calf extension", weight: "0", reps: "10", sets: [false, false, false] }
-                    ]},
-                    { name: "Forearms", exercises: [
-                        { name: "Dumbbell exercises", weight: "0", reps: "10", sets: [false, false, false] },
-                        { name: "Dumbbell reverse", weight: "0", reps: "10", sets: [false, false, false] }
-                    ]},
-                    { name: "Abs", exercises: [
-                        { name: "Rotary torso", weight: "200", reps: "12-10-8", sets: [false, false, false] },
-                        { name: "Abdominal crunch machine", weight: "0", reps: "10", sets: [false, false, false] }
-                    ]}
-                ]
-            },
-            "Wednesday": { isRest: true, groups: [] }
-        };
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <div class="nav-inner">
+      <button class="nav-button active" data-tab="today" aria-current="page"><svg viewBox="0 0 24 24" fill="none"><path d="M3 10.7 12 3l9 7.7M5.5 9.5V21h13V9.5M9.5 21v-7h5v7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Today</span></button>
+      <button class="nav-button" data-tab="plan"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3.5" width="16" height="17" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span>Plan</span></button>
+      <button class="nav-button" data-tab="progress"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V5M4 19h17M7 15l4-4 3 2 5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 7h3v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Progress</span></button>
+      <button class="nav-button" data-tab="history"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 2M4 4l3 1-1 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span>History</span></button>
+    </div>
+  </nav>
+  <div class="toast" id="toast" role="status"></div>
 
-        const getMuscleIcon = (muscleName) => {
-            const name = muscleName.toLowerCase();
-            if (name.includes('chest')) return 'ph-barbell';
-            if (name.includes('bicep') || name.includes('tricep') || name.includes('arm')) return 'ph-hand-fist';
-            if (name.includes('abs') || name.includes('abdominal')) return 'ph-squares-four';
-            if (name.includes('shoulder')) return 'ph-triangle';
-            if (name.includes('back') || name.includes('lat')) return 'ph-arrow-fat-lines-up';
-            if (name.includes('leg') || name.includes('calf')) return 'ph-sneaker';
-            return 'ph-activity';
-        };
+<script>
+(() => {
+  'use strict';
+  const STORAGE_KEY = 'GymWorkoutTracker.pwa.v1';
+  const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const WORKOUTS = [
+    {
+      id: 'upper-a', day: 2, dayName: 'Tuesday', title: 'Upper A', subtitle: 'Chest · Back · Arms · Side core',
+      exercises: [
+        { id:'chest-press', name:'Chest Press Machine', sets:3, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
+        { id:'seated-row', name:'Seated Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'incline-press', name:'MTS Incline Press Machine', sets:2, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
+        { id:'front-pulldown', name:'MTS Front Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
+        { id:'lateral-raise', name:'Dumbbell or Machine Lateral Raise', sets:3, min:13, max:15, target:'Side deltoids (shoulders)', tag:'Shoulders', rest:120 },
+        { id:'biceps-curl', name:'Biceps Curl Machine', sets:2, min:13, max:15, target:'Biceps', tag:'Biceps', rest:120 },
+        { id:'triceps-extension', name:'Triceps Extension Machine', sets:2, min:13, max:15, target:'Triceps', tag:'Triceps', rest:120 },
+        { id:'side-bend-left', name:'Single Dumbbell Side Bend — Left', sets:3, min:13, max:15, target:'Left obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'side-bend-right', name:'Single Dumbbell Side Bend — Right', sets:3, min:13, max:15, target:'Right obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'wrist-curl', name:'Dumbbell Wrist Curl', sets:2, min:18, max:20, target:'Wrist flexors and forearms', tag:'Forearms', rest:120 }
+      ]
+    },
+    {
+      id: 'upper-b', day: 4, dayName: 'Thursday', title: 'Upper B', subtitle: 'Chest · Back · Shoulders · Arms · Core',
+      exercises: [
+        { id:'incline-press', name:'MTS Incline Press Machine', sets:3, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
+        { id:'lat-pulldown', name:'Lat Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
+        { id:'mts-row', name:'MTS Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'pec-fly', name:'Pec Fly Machine', sets:2, min:13, max:15, target:'Chest (pectorals)', tag:'Chest', rest:120 },
+        { id:'shoulder-press', name:'Shoulder Press Machine', sets:2, min:10, max:12, target:'Front and side delts, triceps', tag:'Shoulders', rest:180, compound:true },
+        { id:'reverse-fly', name:'Reverse Pec Fly Machine', sets:3, min:13, max:15, target:'Rear delts and upper back', tag:'Rear delts', rest:120 },
+        { id:'biceps-curl', name:'Biceps Curl Machine (or alternative)', sets:2, min:13, max:15, target:'Biceps', tag:'Biceps', rest:120 },
+        { id:'triceps-press', name:'Triceps Press Machine', sets:2, min:10, max:12, target:'Triceps; seated press/dip-style machine', tag:'Triceps', rest:180, compound:true },
+        { id:'torso-rotation-left', name:'Torso Rotation Machine — Left', sets:2, min:13, max:15, target:'Obliques and trunk rotators (left direction)', tag:'Core', rest:120 },
+        { id:'torso-rotation-right', name:'Torso Rotation Machine — Right', sets:2, min:13, max:15, target:'Obliques and trunk rotators (right direction)', tag:'Core', rest:120 },
+        { id:'reverse-wrist-curl', name:'Reverse Dumbbell Wrist Curl', sets:2, min:18, max:20, target:'Wrist extensors and forearms', tag:'Forearms', rest:120 }
+      ]
+    },
+    {
+      id: 'upper-c', day: 6, dayName: 'Saturday', title: 'Upper C', subtitle: 'Chest · Back · Shoulders · Arms · Core',
+      exercises: [
+        { id:'chest-press', name:'Chest Press Machine', sets:2, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
+        { id:'assisted-pullup', name:'Assisted Pull Up Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true, assistance:true },
+        { id:'pec-fly', name:'Pec Fly Machine', sets:2, min:13, max:15, target:'Chest (pectorals)', tag:'Chest', rest:120 },
+        { id:'seated-row', name:'Seated Row Machine', sets:1, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'mts-row', name:'MTS Row Machine', sets:1, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'lateral-raise', name:'Dumbbell or Machine Lateral Raise', sets:3, min:13, max:15, target:'Side deltoids (shoulders)', tag:'Shoulders', rest:120 },
+        { id:'reverse-fly', name:'Reverse Pec Fly Machine', sets:2, min:13, max:15, target:'Rear delts and upper back', tag:'Rear delts', rest:120 },
+        { id:'hammer-curl', name:'Seated Dumbbell Hammer Curl', sets:2, min:13, max:15, target:'Brachialis, brachioradialis and biceps', tag:'Biceps', rest:120 },
+        { id:'triceps-extension', name:'Triceps Extension Machine', sets:2, min:13, max:15, target:'Triceps', tag:'Triceps', rest:120 },
+        { id:'shrug', name:'Dumbbell or Machine Shrug', sets:3, min:13, max:15, target:'Upper trapezius', tag:'Traps', rest:120 },
+        { id:'side-bend-left', name:'Single Dumbbell Side Bend — Left', sets:3, min:13, max:15, target:'Left obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'side-bend-right', name:'Single Dumbbell Side Bend — Right', sets:3, min:13, max:15, target:'Right obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'ab-crunch', name:'Abdominal Crunch Machine', sets:3, min:13, max:15, target:'Rectus abdominis (front abs)', tag:'Abs', rest:120 }
+      ]
+    },
+    {
+      id: 'legs', day: 0, dayName: 'Sunday', title: 'Legs', subtitle: 'Quads · Hamstrings · Glutes · Calves',
+      exercises: [
+        { id:'leg-press', name:'Leg Press Machine', sets:4, min:10, max:12, target:'Quadriceps, glutes, adductors', tag:'Quads + glutes', rest:180, compound:true },
+        { id:'seated-leg-curl', name:'Seated Leg Curl Machine', sets:4, min:13, max:15, target:'Hamstrings', tag:'Hamstrings', rest:120 },
+        { id:'leg-extension', name:'Leg Extension Machine', sets:3, min:13, max:15, target:'Quadriceps', tag:'Quads', rest:120 },
+        { id:'glute-drive', name:'Hip-Thrust / Glute-Drive Machine', sets:3, min:10, max:12, target:'Gluteus maximus, hamstrings', tag:'Glutes', rest:180, compound:true },
+        { id:'calf-extension', name:'Calf Extension Machine', sets:4, min:13, max:15, target:'Gastrocnemius and soleus (calves)', tag:'Calves', rest:120 },
+        { id:'back-extension', name:'Back Extension Machine', sets:2, min:18, max:20, target:'Spinal erectors, glutes, hamstrings', tag:'Posterior chain', rest:120 }
+      ]
+    }
+  ];
 
-        const getExerciseIcon = (exerciseName) => {
-            const name = exerciseName.toLowerCase();
-            if (name.includes('cable')) return 'ph-link';
-            if (name.includes('machine')) return 'ph-engine';
-            if (name.includes('dumbbell')) return 'ph-barbell';
-            if (name.includes('curl')) return 'ph-arrows-clockwise';
-            if (name.includes('press')) return 'ph-arrows-out-line-vertical';
-            if (name.includes('fly')) return 'ph-bird';
-            if (name.includes('extension')) return 'ph-arrows-out';
-            if (name.includes('pull')) return 'ph-arrows-in-line-vertical';
-            if (name.includes('row')) return 'ph-boat';
-            return 'ph-target';
-        };
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
+  let activeTab = 'today';
+  let selectedProgress = '';
+  let timerInterval = null;
+  let toastTimeout = null;
+  let store = loadStore();
 
-        const App = () => {
-            const [workoutData, setWorkoutData] = useState(() => {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                return saved ? JSON.parse(saved) : initialSeedData;
-            });
-            
-            const [currentDay, setCurrentDay] = useState(() => {
-                return DAYS[new Date().getDay()];
-            });
-
-            const scrollContainerRef = useRef(null);
-            const activeDayRef = useRef(null);
-
-            useEffect(() => {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(workoutData));
-            }, [workoutData]);
-
-            // Auto-scroll the day slider to center the active day
-            useEffect(() => {
-                if (activeDayRef.current && scrollContainerRef.current) {
-                    activeDayRef.current.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        inline: 'center', 
-                        block: 'nearest' 
-                    });
-                }
-            }, [currentDay]);
-
-            const dayData = workoutData[currentDay];
-
-            // Dynamically recalculate progress whenever workoutData for currentDay changes
-            const progress = useMemo(() => {
-                if (dayData.isRest) return { completed: 0, total: 0, percent: 100 };
-                
-                let total = 0;
-                let completed = 0;
-                
-                dayData.groups.forEach(group => {
-                    group.exercises.forEach(ex => {
-                        total += ex.sets.length;
-                        completed += ex.sets.filter(s => s).length;
-                    });
-                });
-
-                return {
-                    completed,
-                    total,
-                    percent: total === 0 ? 0 : Math.round((completed / total) * 100)
-                };
-            }, [workoutData, currentDay]); // Correct dependencies to trigger updates
-
-            const handleUpdateMetric = (gIndex, eIndex, field, value) => {
-                const newData = { ...workoutData };
-                newData[currentDay].groups[gIndex].exercises[eIndex][field] = value;
-                setWorkoutData(newData);
-            };
-
-            const handleToggleSet = (gIndex, eIndex, sIndex) => {
-                const newData = { ...workoutData };
-                const current = newData[currentDay].groups[gIndex].exercises[eIndex].sets[sIndex];
-                newData[currentDay].groups[gIndex].exercises[eIndex].sets[sIndex] = !current;
-                setWorkoutData(newData);
-            };
-
-            return (
-                <div className="relative min-h-screen pb-24">
-                    {/* Ambient Glow Orbs */}
-                    <div className="ambient-orb bg-brand-500 w-96 h-96 top-[-10%] left-[-10%]"></div>
-                    <div className="ambient-orb bg-brand-400 w-80 h-80 bottom-[20%] right-[-10%] opacity-20" style={{animationDelay: '2s'}}></div>
-
-                    {/* Header */}
-                    <header className="px-6 pt-12 pb-6 flex justify-between items-center z-10 relative">
-                        <div>
-                            <p className="text-brand-500 font-bold tracking-widest text-xs uppercase mb-1 flex items-center gap-2">
-                                <i className="ph-fill ph-fire text-lg"></i> Protocol
-                            </p>
-                            <h1 className="text-4xl font-black tracking-tight">Focus <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-brand-500">Today</span></h1>
-                        </div>
-                        
-                        {/* Dynamic Circular Progress Ring */}
-                        <div className="relative w-16 h-16 flex items-center justify-center glass-card rounded-full border border-white/5">
-                            <svg className="w-14 h-14 transform -rotate-90">
-                                <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="2" fill="transparent" className="text-surface-300" />
-                                <circle cx="28" cy="28" r="24" stroke="currentColor" strokeWidth="2.5" fill="transparent" 
-                                    className="text-brand-500 transition-all duration-700 ease-out drop-shadow-[0_0_8px_rgba(0,255,163,0.8)]"
-                                    strokeDasharray={2 * Math.PI * 24}
-                                    strokeDashoffset={2 * Math.PI * 24 - (progress.percent / 100) * (2 * Math.PI * 24)}
-                                    strokeLinecap="round"
-                                />
-                            </svg>
-                            <span className="absolute text-sm font-black">{progress.percent}%</span>
-                        </div>
-                    </header>
-
-                    {/* Transparent Day Navigator with Auto-scroll */}
-                    <nav className="mb-8 z-10 relative">
-                        <div 
-                            ref={scrollContainerRef}
-                            className="flex overflow-x-auto no-scrollbar snap-x px-6 gap-6"
-                        >
-                            {DAYS.map(day => {
-                                const isActive = day === currentDay;
-                                return (
-                                    <button 
-                                        key={day}
-                                        ref={isActive ? activeDayRef : null}
-                                        onClick={() => setCurrentDay(day)}
-                                        className={`snap-center shrink-0 pb-3 flex flex-col items-center justify-center transition-all duration-300 relative ${
-                                            isActive 
-                                            ? 'text-brand-500 font-bold scale-110' 
-                                            : 'text-white/30 hover:text-white/60 font-medium'
-                                        }`}
-                                    >
-                                        <span className="text-sm tracking-widest uppercase">{day.substring(0, 3)}</span>
-                                        {isActive && (
-                                            <div className="absolute bottom-0 w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_#00FFA3]"></div>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                        <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mt-[-1px]"></div>
-                    </nav>
-
-                    {}
-                    <main className="px-6 space-y-8 z-10 relative">
-                        {dayData.isRest ? (
-                            <div className="glass-card rounded-[2rem] p-10 text-center flex flex-col items-center justify-center h-72 border-brand-400/10">
-                                <div className="w-20 h-20 rounded-full bg-brand-500/5 flex items-center justify-center mb-6">
-                                    <i className="ph-fill ph-battery-charging text-4xl text-brand-500"></i>
-                                </div>
-                                <h2 className="text-2xl font-bold mb-3 tracking-wide">System Recovery</h2>
-                                <p className="text-white/40 text-sm leading-relaxed">Muscle synthesis active.<br/>Optimize hydration and sleep.</p>
-                            </div>
-                        ) : (
-                            dayData.groups.map((group, gIndex) => {
-                                const isGroupCompleted = group.exercises.every(ex => ex.sets.every(s => s));
-                                const muscleIconClass = getMuscleIcon(group.name);
-
-                                return (
-                                    <div key={gIndex} className="relative fade-in">
-                                        <div className="flex items-center gap-3 mb-4 pl-2">
-                                            <i className={`ph-fill ${muscleIconClass} text-xl ${isGroupCompleted ? 'text-brand-500' : 'text-white/50'}`}></i>
-                                            <h3 className={`text-lg font-black tracking-widest uppercase ${isGroupCompleted ? 'text-brand-500' : 'text-white/90'}`}>{group.name}</h3>
-                                            <div className="h-[1px] bg-gradient-to-r from-surface-300 to-transparent flex-grow ml-2"></div>
-                                        </div>
-                                        
-                                        <div className={`glass-card rounded-[2rem] p-5 sm:p-6 transition-all duration-500 relative overflow-hidden ${isGroupCompleted ? 'glow-completed' : ''}`}>
-                                            
-                                            {isGroupCompleted && (
-                                                <div className="absolute -right-16 -top-16 w-40 h-40 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                                            )}
-                                            
-                                            {isGroupCompleted && (
-                                                <div className="absolute top-5 right-5 text-brand-500 flex items-center gap-1.5 z-10 opacity-80">
-                                                    <i className="ph-bold ph-check-circle text-xl"></i>
-                                                </div>
-                                            )}
-
-                                            <div className="space-y-6">
-                                                {group.exercises.map((ex, eIndex) => {
-                                                    const isExCompleted = ex.sets.every(s => s);
-                                                    const exIconClass = getExerciseIcon(ex.name);
-
-                                                    return (
-                                                        <div key={eIndex} className={`relative transition-all duration-500 ${isExCompleted ? 'opacity-60 grayscale-[30%]' : ''}`}>
-                                                            
-                                                            <div className="flex items-center gap-3 mb-3">
-                                                                {/* Flex-shrink-0 fixes mobile squishing */}
-                                                                <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center border transition-all ${isExCompleted ? 'bg-brand-500/20 border-brand-500 text-brand-400' : 'border-white/10 text-white/60 bg-white/5'}`}>
-                                                                    <i className={`text-xl ${isExCompleted ? 'ph-bold ph-check' : `ph-fill ${exIconClass}`}`}></i>
-                                                                </div>
-                                                                <h4 className={`text-base sm:text-lg font-bold leading-tight transition-all ${isExCompleted ? 'exercise-done-text text-brand-500' : 'text-white'}`}>
-                                                                    {ex.name}
-                                                                </h4>
-                                                            </div>
-                                                            
-                                                            <div className="pl-13 sm:pl-14">
-                                                                <div className="grid grid-cols-2 gap-3 mb-4">
-                                                                    <div className="input-glass border border-white/5 rounded-xl p-2.5 focus-within:border-brand-500/50 focus-within:bg-brand-500/5 transition-all">
-                                                                        <label className="block text-[10px] text-white/30 font-bold uppercase tracking-wider mb-0.5">Weight (lb)</label>
-                                                                        <input type="text" value={ex.weight} 
-                                                                            onChange={(e) => handleUpdateMetric(gIndex, eIndex, 'weight', e.target.value)}
-                                                                            className="w-full bg-transparent text-brand-400 font-black text-xl sm:text-2xl outline-none" />
-                                                                    </div>
-                                                                    <div className="input-glass border border-white/5 rounded-xl p-2.5 focus-within:border-brand-500/50 focus-within:bg-brand-500/5 transition-all">
-                                                                        <label className="block text-[10px] text-white/30 font-bold uppercase tracking-wider mb-0.5">Reps</label>
-                                                                        <input type="text" value={ex.reps} 
-                                                                            onChange={(e) => handleUpdateMetric(gIndex, eIndex, 'reps', e.target.value)}
-                                                                            className="w-full bg-transparent text-white/90 font-black text-xl sm:text-2xl outline-none" />
-                                                                    </div>
-                                                                </div>
-
-                                                                <div className="flex items-center gap-2.5 sm:gap-4 overflow-x-auto no-scrollbar pb-1">
-                                                                    {ex.sets.map((isDone, sIndex) => (
-                                                                        <button 
-                                                                            key={sIndex}
-                                                                            onClick={() => handleToggleSet(gIndex, eIndex, sIndex)}
-                                                                            className={`w-11 h-11 sm:w-12 sm:h-12 shrink-0 rounded-full flex items-center justify-center font-bold text-base sm:text-lg transition-all duration-300 border-2 ${
-                                                                                isDone 
-                                                                                ? 'bg-brand-500 border-brand-500 text-app shadow-[0_0_20px_rgba(0,255,163,0.4)] scale-105' 
-                                                                                : 'border-white/10 text-white/40 bg-surface-100 hover:border-brand-500/50 hover:text-brand-500'
-                                                                            }`}
-                                                                        >
-                                                                            {isDone ? <i className="ph-bold ph-check"></i> : (sIndex + 1)}
-                                                                        </button>
-                                                                    ))}
-                                                                    <div className="ml-auto text-[10px] sm:text-xs text-white/20 font-bold uppercase tracking-widest pl-2">
-                                                                        Sets
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        )}
-                    </main>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+  function loadStore() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return { sessions: {}, timer: null, unit: 'lb' };
+      const parsed = JSON.parse(raw);
+      return { sessions: parsed.sessions || {}, timer: parsed.timer || null, unit: parsed.unit || 'lb' };
+    } catch (_) { return { sessions: {}, timer: null, unit: 'lb' }; }
+  }
+  function saveStore() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); $('#connectionLabel').textContent = 'Saved on device'; }
+    catch (_) { $('#connectionLabel').textContent = 'Save unavailable'; }
+  }
+  function dateKey(date = new Date()) {
+    const y = date.getFullYear(); const m = String(date.getMonth()+1).padStart(2,'0'); const d = String(date.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  function parseDate(key) { const [y,m,d] = key.split('-').map(Number); return new Date(y, m-1, d, 12); }
+  function formatDate(key, opts={ weekday:'short', month:'short', day:'numeric' }) { return parseDate(key).toLocaleDateString(undefined, opts); }
+  function formatLongDate(key) { return parseDate(key).toLocaleDateString(undefined, { weekday:'long', month:'long', day:'numeric', year:'numeric' }); }
+  function getWeekStart(date=new Date()) { const d = new Date(date.getFullYear(),date.getMonth(),date.getDate(),12); const diff = (d.getDay()+6)%7; d.setDate(d.getDate()-diff); return dateKey(d); }
+  function addDays(date, count) { const d = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12); d.setDate(d.getDate()+count); return d; }
+  function dayWorkout(day) { return WORKOUTS.find(w => w.day === day) || null; }
+  function workoutById(id) { return WORKOUTS.find(w => w.id === id) || null; }
+  function sessionKey(date, workoutId) { return `${date}__${workoutId}`; }
+  function makeBlankSession(date, workout) {
+    const sets = {};
+    workout.exercises.forEach(ex => { sets[ex.id] = Array.from({length:ex.sets}, () => ({weight:'', reps:'', rir:'', done:false})); });
+    return { date, workoutId:workout.id, sets, createdAt:Date.now(), updatedAt:null };
+  }
+  function getSession(date, workout, create=true) {
+    const key = sessionKey(date, workout.id);
+    if (!store.sessions[key] && create) { store.sessions[key] = makeBlankSession(date, workout); saveStore(); }
+    return store.sessions[key] || null;
+  }
+  function allSetCount(workout) { return workout.exercises.reduce((sum, ex) => sum + ex.sets, 0); }
+  function getSetRows(session, workout) {
+    return workout.exercises.flatMap(ex => (session?.sets?.[ex.id] || []).map((set, i) => ({ex, set, index:i})));
+  }
+  function isSetLogged(set) { return !!(set && (set.done || String(set.weight).trim() || String(set.reps).trim() || String(set.rir).trim())); }
+  function hasAnyData(session, workout) { return getSetRows(session, workout).some(row => isSetLogged(row.set)); }
+  function progressFor(session, workout) {
+    const rows = getSetRows(session, workout);
+    return { done: rows.filter(r=>r.set.done).length, total: rows.length, filled: rows.filter(r=>isSetLogged(r.set)).length };
+  }
+  function isWorkoutComplete(session, workout) { const p=progressFor(session,workout); return p.total>0 && p.done===p.total; }
+  function weekSessions() {
+    const start = getWeekStart();
+    const end = dateKey(addDays(parseDate(start),6));
+    return Object.values(store.sessions).filter(s => s.date >= start && s.date <= end).map(s=>({session:s, workout:workoutById(s.workoutId)})).filter(x=>x.workout && hasAnyData(x.session,x.workout));
+  }
+  function weekStats() {
+    const sessions=weekSessions(); let done=0,total=0,reps=0;
+    sessions.forEach(({session,workout})=>getSetRows(session,workout).forEach(({set})=>{ if(set.done) done++; if(set.reps!=='' && Number.isFinite(Number(set.reps))) reps += Number(set.reps); total++; }));
+    return { workouts:sessions.length, completed:sessions.filter(x=>isWorkoutComplete(x.session,x.workout)).length, done, total, reps };
+  }
+  function getTodayWorkout() { return dayWorkout(new Date().getDay()); }
+  function nextWorkout() {
+    const now = new Date();
+    for (let i=1; i<=7; i++) { const date=addDays(now,i); const workout=dayWorkout(date.getDay()); if(workout) return {workout,date}; }
+    return null;
+  }
+  function esc(value) { return String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function formatWeight(value) { return value === '' || value == null ? '—' : `${value} ${store.unit}`; }
+  function validNum(value) { return value !== '' && Number.isFinite(Number(value)); }
+  function getLastSessionForExercise(workoutId, exerciseId, beforeDate) {
+    const matches=Object.values(store.sessions).filter(s=>s.workoutId===workoutId && s.date<beforeDate && s.sets?.[exerciseId] && s.sets[exerciseId].some(set=>set.weight!=='' || set.reps!=='' || set.done)).sort((a,b)=>b.date.localeCompare(a.date));
+    return matches[0] || null;
+  }
+  function setSummary(sets) {
+    const valid=sets.filter(s=>s.weight!=='' || s.reps!=='');
+    if(!valid.length) return 'No numbers logged yet';
+    const weightVals=valid.filter(s=>s.weight!=='').map(s=>Number(s.weight));
+    const weight=weightVals.length ? `${Math.max(...weightVals)} ${store.unit}` : 'weight n/a';
+    const reps=valid.filter(s=>s.reps!=='').map(s=>s.reps).join('/');
+    return `${weight} · reps ${reps || '—'}`;
+  }
+  function previousHint(workout, ex, date) {
+    const prev=getLastSessionForExercise(workout.id,ex.id,date);
+    if(!prev) return 'First log for this exercise in this session';
+    const sets=prev.sets[ex.id] || [];
+    const detail=setSummary(sets);
+    return `Last (${formatDate(prev.date,{month:'short',day:'numeric'})}): ${detail}`;
+  }
+  function currentSessionInfo() {
+    const workout=getTodayWorkout();
+    if(!workout) return {workout:null,session:null};
+    return {workout,session:getSession(dateKey(),workout)};
+  }
+  function iconClock() { return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 9v4l2.5 1.5M9 2h6M12 2v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'; }
+  function renderStat(label,value,foot) { return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-foot">${foot}</div></div>`; }
+  function renderWeekOverview() {
+    const s=weekStats();
+    return `<div class="week-overview">${renderStat('WORKOUTS LOGGED',s.workouts,`${s.completed} fully completed`)}${renderStat('SETS CHECKED',s.done,`of ${s.total} planned`)}${renderStat('REPS RECORDED',s.reps,'this Monday–Sunday')}</div>`;
+  }
+  function renderSessionHero(workout,session,date) {
+    const p=progressFor(session,workout); const percent=p.total?Math.round(100*p.done/p.total):0;
+    return `<section class="session-hero"><p class="hero-kicker">${esc(workout.dayName)} · ${esc(formatDate(date,{month:'short',day:'numeric'}))}</p><h2>${esc(workout.title)}</h2><p class="hero-sub">${esc(workout.subtitle)} · ${workout.exercises.length} exercises</p><div class="hero-progress-row"><span>Session progress</span><strong>${p.done}/${p.total} sets</strong></div><div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div></section>`;
+  }
+  function renderExerciseCard(workout,session,ex) {
+    const sets=session.sets[ex.id] || Array.from({length:ex.sets},()=>({weight:'',reps:'',rir:'',done:false}));
+    const p=previousHint(workout,ex,session.date);
+    const targetLabel=ex.assistance?'Assistance (lower is harder)':`Weight (${store.unit})`;
+    const rows=sets.map((set,i)=>`<div class="set-row ${set.done?'is-done':''}" data-exercise-row="${esc(ex.id)}">
+      <input class="set-check" type="checkbox" aria-label="Mark set ${i+1} complete" data-action="toggle-set" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}" ${set.done?'checked':''}>
+      <span class="set-number">${i+1}</span>
+      <div class="field-wrap"><input class="set-input" aria-label="Set ${i+1} weight in ${store.unit}" type="number" inputmode="decimal" min="0" step="0.5" placeholder="${ex.assistance?'assist.':'weight'}" value="${esc(set.weight)}" data-action="set-field" data-field="weight" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}"></div>
+      <div class="field-wrap"><input class="set-input" aria-label="Set ${i+1} reps" type="number" inputmode="numeric" min="0" step="1" placeholder="${ex.min}–${ex.max}" value="${esc(set.reps)}" data-action="set-field" data-field="reps" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}"></div>
+      <div class="field-wrap"><select class="rir-select" aria-label="Set ${i+1} reps in reserve" data-action="set-field" data-field="rir" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}"><option value="" ${set.rir===''?'selected':''}>RIR —</option>${[0,1,2,3,4,5].map(v=>`<option value="${v}" ${String(set.rir)===String(v)?'selected':''}>${v===5?'5+':v}</option>`).join('')}</select></div>
+    </div>`).join('');
+    return `<article class="exercise-card" id="exercise-${esc(ex.id)}"><div class="exercise-top"><div class="exercise-title-wrap"><h3>${esc(ex.name)}</h3><p class="target-muscle">Target: ${esc(ex.target)}</p></div><span class="muscle-pill">${esc(ex.tag)}</span></div><div class="prescription-row"><div class="prescription">${ex.sets} sets · ${ex.min}–${ex.max} reps</div><button class="rest-button" data-action="start-rest" data-seconds="${ex.rest}" data-label="${esc(ex.name)}">${iconClock()} Rest ${Math.floor(ex.rest/60)}:00</button></div><p class="last-performance">${esc(p)}</p><div class="sets-header"><span>Done</span><span>Set</span><span>${esc(targetLabel)}</span><span>Reps</span><span>RIR</span></div>${rows}<div class="exercise-footer"><button class="small-action" data-action="clear-exercise" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}">Clear this exercise</button></div></article>`;
+  }
+  function renderToday() {
+    const date=dateKey(); const workout=getTodayWorkout();
+    let html=`<div class="section-heading" style="margin-top:0"><div><h2>Today</h2><p>${esc(formatLongDate(date))}</p></div><button class="text-link" data-action="go-tab" data-tab="plan">View plan →</button></div>${renderWeekOverview()}`;
+    if(!workout) {
+      const next=nextWorkout();
+      html+=`<div class="section-heading"><div><h2>Recovery day</h2><p>Rest is part of the plan.</p></div></div><section class="rest-day"><div class="rest-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M20 14.2A7.8 7.8 0 0 1 9.8 4a8.5 8.5 0 1 0 10.2 10.2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="m15.5 4 .6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6.6-1.5Z" fill="currentColor"/></svg></div><h2>Take it easy today.</h2><p>No workout is scheduled for today. Recover, eat well, and come back ready for your next session.</p>${next?`<div class="next-card"><small>Next up · ${esc(next.workout.dayName)}, ${esc(formatDate(dateKey(next.date),{month:'short',day:'numeric'}))}</small><strong>${esc(next.workout.title)}</strong><span>${next.workout.exercises.length} exercises · ${allSetCount(next.workout)} working sets</span></div>`:''}<div style="margin-top:14px"><button class="primary-button" data-action="go-tab" data-tab="plan">View your workout plan</button></div></section>`;
+      return html;
+    }
+    const session=getSession(date,workout);
+    html+=`<div class="section-heading"><div><h2>Your session</h2><p>Log every working set as you go.</p></div><span style="color:var(--muted);font-size:10px;font-weight:800">${allSetCount(workout)} SETS</span></div>${renderSessionHero(workout,session,date)}<div class="section-heading"><div><h2>Exercises</h2><p>Enter actual weight, reps, and optional RIR.</p></div></div><div class="exercise-list">${workout.exercises.map(ex=>renderExerciseCard(workout,session,ex)).join('')}</div><p class="note">Progression rule: when every set reaches the top of its rep range with consistent technique and about 2 RIR, try the smallest useful weight increase next time. For assisted pull-ups, progress by reducing assistance.</p><div style="display:flex;justify-content:center;margin-top:16px"><button class="secondary-button" data-action="export-csv">Export workout log (CSV)</button></div>`;
+    return html;
+  }
+  function renderPlan() {
+    const todayW=getTodayWorkout();
+    return `<div class="section-heading" style="margin-top:0"><div><h2>Your weekly plan</h2><p>Four training days · saved as your default split</p></div></div><p class="section-intro">Rest periods are set to 3 minutes for compound lifts and 2 minutes for isolation/core work. Enter the load you actually used on each set.</p><div class="plan-groups">${WORKOUTS.map(w=>`<details class="plan-group" ${todayW?.id===w.id?'open':''}><summary><div><div class="plan-day">${esc(w.dayName)}</div><strong>${esc(w.title)}</strong><small>${w.exercises.length} exercises · ${allSetCount(w)} sets</small></div><svg class="summary-chevron" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="plan-table">${w.exercises.map(ex=>`<div class="plan-line"><div><strong>${esc(ex.name)}</strong><small>${esc(ex.target)} · rest ${Math.floor(ex.rest/60)} min</small></div><div class="plan-dose">${ex.sets} × ${ex.min}–${ex.max}</div></div>`).join('')}</div></details>`).join('')}</div><p class="note">For side bends and torso rotations, left and right are tracked separately so each side gets its prescribed sets.</p>`;
+  }
+  function progressOptions() {
+    const values=[];
+    WORKOUTS.forEach(w=>w.exercises.forEach(ex=>values.push({value:`${w.id}::${ex.id}`,label:`${w.title} · ${ex.name}`,workout:w,ex})))
+    return values;
+  }
+  function historyForExercise(workoutId,exerciseId) {
+    return Object.values(store.sessions).filter(s=>s.workoutId===workoutId && s.sets?.[exerciseId] && s.sets[exerciseId].some(set=>set.weight!=='' || set.reps!=='' || set.done)).sort((a,b)=>a.date.localeCompare(b.date)).map(session=>({session,sets:session.sets[exerciseId]}));
+  }
+  function topWeight(sets, lowerIsBetter=false) {
+    const weights=sets.filter(s=>s.weight!=='' && Number.isFinite(Number(s.weight))).map(s=>Number(s.weight));
+    if(!weights.length)return null;
+    return lowerIsBetter ? Math.min(...weights) : Math.max(...weights);
+  }
+  function totalReps(sets) { return sets.reduce((sum,s)=>sum+(validNum(s.reps)?Number(s.reps):0),0); }
+  function setDisplay(sets) {
+    const actual=sets.map(s=>`${s.weight!==''?s.weight+' '+store.unit:'—'} × ${s.reps!==''?s.reps:'—'}${s.done?' ✓':''}`).join(' · ');
+    return actual;
+  }
+  function renderTrend(entries, assistance=false) {
+    const valid=entries.map((e)=>({date:e.session.date,weight:topWeight(e.sets,assistance)})).filter(e=>e.weight!==null).slice(-8);
+    if(valid.length<2) return `<div class="empty-state">Log this exercise in at least two sessions with a weight to see a trend chart. Your set-by-set entries are still saved below.</div>`;
+    const width=320,height=145,padL=30,padR=14,padT=15,padB=29;
+    const vals=valid.map(e=>e.weight); let min=Math.min(...vals),max=Math.max(...vals); if(min===max){min=Math.max(0,min-1);max=max+1;} const range=max-min;
+    const x=i=>padL+(width-padL-padR)*(i/(valid.length-1)); const y=v=>padT+(height-padT-padB)*(1-(v-min)/range);
+    const pts=valid.map((e,i)=>`${x(i)},${y(e.weight)}`).join(' ');
+    const gridVals=[min,(min+max)/2,max];
+    return `<div class="trend-wrap"><div class="trend-title"><strong>${assistance?'Assistance trend':'Top set weight trend'}</strong><span>${assistance?'lower is better':esc(store.unit)}</span></div><svg class="trend-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Top set load trend over time"><g stroke="#e2e9e0" stroke-width="1">${gridVals.map(v=>`<line x1="${padL}" y1="${y(v)}" x2="${width-padR}" y2="${y(v)}"/>`).join('')}</g><g fill="#8a958d" font-size="9" text-anchor="end">${gridVals.map(v=>`<text x="${padL-6}" y="${y(v)+3}">${esc(Number(v.toFixed(1)))}</text>`).join('')}</g><polyline points="${pts}" fill="none" stroke="#2f6b4f" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>${valid.map((e,i)=>`<circle cx="${x(i)}" cy="${y(e.weight)}" r="4" fill="#d9f078" stroke="#2f6b4f" stroke-width="1.8"><title>${esc(formatDate(e.date,{month:'short',day:'numeric'}))}: ${e.weight} ${store.unit}</title></circle>`).join('')}<g fill="#78857c" font-size="9" text-anchor="middle">${valid.map((e,i)=>(i===0||i===valid.length-1||i===Math.floor(valid.length/2))?`<text x="${x(i)}" y="${height-7}">${esc(formatDate(e.date,{month:'numeric',day:'numeric'}))}</text>`:'').join('')}</g></svg></div>`;
+  }
+  function renderProgress() {
+    const options=progressOptions();
+    if(!selectedProgress || !options.some(o=>o.value===selectedProgress)) selectedProgress=options[0]?.value || '';
+    const selected=options.find(o=>o.value===selectedProgress);
+    const s=weekStats();
+    let html=`<div class="section-heading" style="margin-top:0"><div><h2>Progress</h2><p>Compare each exercise within the same workout.</p></div></div><div class="week-overview">${renderStat('WORKOUTS LOGGED',s.workouts,`${s.completed} completed`)}${renderStat('SETS CHECKED',s.done,`of ${s.total} planned`)}${renderStat('REPS RECORDED',s.reps,'this week')}</div><div class="section-heading"><div><h2>Exercise history</h2><p>Keep each day’s version separate.</p></div></div><section class="panel"><h3>Pick an exercise</h3><label class="select-label" for="progressSelect">Workout · exercise</label><select class="wide-select" id="progressSelect">${options.map(o=>`<option value="${esc(o.value)}" ${o.value===selectedProgress?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`;
+    if(selected) {
+      const entries=historyForExercise(selected.workout.id,selected.ex.id);
+      const last=entries[entries.length-1];
+      html+=`<div style="margin-top:16px"><div style="font-size:12px;font-weight:850">${esc(selected.ex.name)}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Target: ${esc(selected.ex.target)} · ${selected.ex.sets} sets × ${selected.ex.min}–${selected.ex.max} reps</div></div>`;
+      if(last) {
+        const best=topWeight(last.sets,!!selected.ex.assistance); const reps=totalReps(last.sets); const checked=last.sets.filter(x=>x.done).length;
+        html+=`<div class="week-overview" style="margin-top:13px;grid-template-columns:repeat(3,minmax(0,1fr))">${renderStat('LATEST LOG',formatDate(last.session.date,{month:'short',day:'numeric'}),'last session')}${renderStat(selected.ex.assistance?'ASSISTANCE':'TOP WEIGHT',best===null?'—':best, best===null?'no weight logged':(selected.ex.assistance?'less is harder':store.unit))}${renderStat('TOTAL REPS',reps,`${checked}/${last.sets.length} sets checked`)}</div>`;
+      }
+      html+=`<div style="margin-top:15px">${entries.length?renderTrend(entries,!!selected.ex.assistance):'<div class="empty-state">No logged sets for this exercise yet. Start a workout and enter your actual weight and reps; your history will appear here automatically.</div>'}</div>`;
+      if(entries.length) html+=`<div class="entries">${entries.slice().reverse().map(({session,sets})=>`<div class="entry-row"><div><div class="entry-date">${esc(formatLongDate(session.date))}</div><div class="entry-detail">${esc(setDisplay(sets))}</div><div class="entry-detail">${sets.filter(s=>s.done).length}/${sets.length} sets checked${sets.some(s=>s.rir!=='')?' · RIR '+sets.filter(s=>s.rir!=='').map(s=>s.rir).join('/') : ''}</div></div><div class="entry-result">${topWeight(sets,!!selected.ex.assistance)===null?'—':`${topWeight(sets,!!selected.ex.assistance)} ${store.unit}`}<small>${totalReps(sets)} total reps</small></div></div>`).join('')}</div>`;
+    }
+    html+=`</section><p class="note">A logged top weight is only one data point. Compare reps, RIR, technique, and machine settings too. For assisted pull-ups, reducing the assistance amount is progress.</p>`;
+    return html;
+  }
+  function renderHistory() {
+    const items=Object.values(store.sessions).filter(s=>{const w=workoutById(s.workoutId);return w&&hasAnyData(s,w)}).sort((a,b)=>b.date.localeCompare(a.date));
+    let html=`<div class="section-heading" style="margin-top:0"><div><h2>Workout history</h2><p>Your completed and in-progress sessions.</p></div><button class="text-link" data-action="export-csv">Export CSV ↓</button></div>`;
+    if(!items.length) return html+`<div class="empty-state">Your training history will appear here when you log your first set. Your entries are saved automatically on this device.</div>`;
+    html+=`<div class="history-list">${items.map(session=>{
+      const w=workoutById(session.workoutId); const p=progressFor(session,w); const complete=isWorkoutComplete(session,w); const pct=Math.round(100*p.done/p.total);
+      const loggedExercises=w.exercises.map(ex=>({ex,sets:session.sets[ex.id]||[]})).filter(x=>x.sets.some(set=>isSetLogged(set)));
+      return `<article class="history-card"><div class="history-head"><div><h3>${esc(w.title)}</h3><p>${esc(formatLongDate(session.date))}</p></div><span class="history-badge ${complete?'':'in-progress'}">${complete?'Completed':'In progress'}</span></div><div class="history-progress"><span>${p.done}/${p.total} sets checked</span><strong>${pct}%</strong></div><div class="history-track"><span style="width:${pct}%"></span></div><div class="history-exercises">${loggedExercises.map(({ex,sets})=>`<div class="history-exercise"><span>${esc(ex.name)}</span><strong>${sets.filter(s=>isSetLogged(s)).length}/${sets.length} logged · ${totalReps(sets)} reps</strong></div>`).join('')}</div></article>`;
+    }).join('')}</div><div style="display:flex;justify-content:center;margin-top:15px"><button class="secondary-button" data-action="export-csv">Export all sessions (CSV)</button></div>`;
+    return html;
+  }
+  function renderTimer() {
+    const dock=$('#timerDock'); const t=store.timer;
+    if(!t) { dock.hidden=true; return; }
+    dock.hidden=false;
+    $('#timerLabel').textContent=t.label || 'Rest timer';
+    $('#timerValue').textContent=formatRemaining(remainingMs(t));
+    if(t.paused && t.remainingMs<=0) {
+      $('#timerLabel').textContent='Rest complete';
+      $('#timerControls').innerHTML='<button class="timer-dismiss" data-action="timer-dismiss">Done</button>';
+    } else if(t.paused) {
+      $('#timerControls').innerHTML='<button data-action="timer-resume">Resume</button><button data-action="timer-reset">Reset</button>';
+    } else {
+      $('#timerControls').innerHTML='<button data-action="timer-pause">Pause</button><button data-action="timer-reset">Reset</button>';
+    }
+  }
+  function remainingMs(t) { if(!t) return 0; return t.paused ? Math.max(0,t.remainingMs||0) : Math.max(0,(t.endAt||Date.now())-Date.now()); }
+  function formatRemaining(ms) { const sec=Math.max(0,Math.ceil(ms/1000)); return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`; }
+  function startTimer(seconds,label='Rest timer') {
+    const duration=Math.max(1,Number(seconds)||120)*1000;
+    store.timer={durationMs:duration,endAt:Date.now()+duration,remainingMs:duration,paused:false,label}; saveStore(); renderTimer();
+  }
+  function pauseTimer() { if(!store.timer || store.timer.paused)return; store.timer.remainingMs=remainingMs(store.timer); store.timer.paused=true; store.timer.endAt=null; saveStore(); renderTimer(); }
+  function resumeTimer() { if(!store.timer || !store.timer.paused || store.timer.remainingMs<=0)return; store.timer.paused=false; store.timer.endAt=Date.now()+store.timer.remainingMs; saveStore(); renderTimer(); }
+  function resetTimer() { if(!store.timer)return; store.timer.remainingMs=store.timer.durationMs; store.timer.endAt=Date.now()+store.timer.durationMs; store.timer.paused=false; saveStore(); renderTimer(); }
+  function tickTimer() {
+    if(!store.timer || store.timer.paused) return;
+    const left=remainingMs(store.timer);
+    $('#timerValue').textContent=formatRemaining(left);
+    if(left<=0) {
+      store.timer.remainingMs=0; store.timer.endAt=null; store.timer.paused=true; saveStore(); renderTimer();
+      try { if('vibrate' in navigator) navigator.vibrate([100,60,100]); } catch(_) {}
+      return;
+    }
+  }
+  function showToast(message) {
+    const el=$('#toast'); el.textContent=message; el.classList.add('show'); clearTimeout(toastTimeout); toastTimeout=setTimeout(()=>el.classList.remove('show'),1900);
+  }
+  function render() {
+    const main=$('#mainView');
+    if(activeTab==='today') main.innerHTML=renderToday();
+    else if(activeTab==='plan') main.innerHTML=renderPlan();
+    else if(activeTab==='progress') main.innerHTML=renderProgress();
+    else main.innerHTML=renderHistory();
+    $$('.nav-button').forEach(btn=>{const isActive=btn.dataset.tab===activeTab;btn.classList.toggle('active',isActive);if(isActive)btn.setAttribute('aria-current','page');else btn.removeAttribute('aria-current');});
+    renderTimer();
+  }
+  function setActiveTab(tab) { if(!['today','plan','progress','history'].includes(tab)) return; activeTab=tab; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+  function getSessionFromDataset(el) {
+    const workout=workoutById(el.dataset.workout); if(!workout)return null;
+    return {workout,session:getSession(el.dataset.date,workout)};
+  }
+  function updateSetField(el) {
+    const {workout,session}=getSessionFromDataset(el); if(!workout||!session)return;
+    const index=Number(el.dataset.index); const exerciseId=el.dataset.exercise; const field=el.dataset.field;
+    if(!session.sets[exerciseId] || !session.sets[exerciseId][index])return;
+    session.sets[exerciseId][index][field]=el.value;
+    session.updatedAt=Date.now(); saveStore();
+  }
+  function toggleSet(el) {
+    const {workout,session}=getSessionFromDataset(el); if(!workout||!session)return;
+    const index=Number(el.dataset.index); const exerciseId=el.dataset.exercise; if(!session.sets[exerciseId]||!session.sets[exerciseId][index])return;
+    const set=session.sets[exerciseId][index]; set.done=el.checked; session.updatedAt=Date.now(); saveStore();
+    if(el.checked) {
+      const rows=getSetRows(session,workout);
+      if(!rows.every(r=>r.set.done)) {
+        const ex=workout.exercises.find(x=>x.id===exerciseId);
+        startTimer(ex?.rest || 120, `${ex?.name || 'Set'} · rest`);
+      }
+    }
+    render();
+  }
+  function clearExercise(el) {
+    const {workout,session}=getSessionFromDataset(el); if(!workout||!session)return;
+    const exerciseId=el.dataset.exercise; const ex=workout.exercises.find(x=>x.id===exerciseId); if(!ex)return;
+    session.sets[exerciseId]=Array.from({length:ex.sets},()=>({weight:'',reps:'',rir:'',done:false})); session.updatedAt=Date.now(); saveStore(); render(); showToast('Exercise sets cleared');
+  }
+  function exportCsv() {
+    const lines=[['Date','Workout','Day','Exercise','Set','Target reps','Weight','Unit','Reps','RIR','Checked']];
+    Object.values(store.sessions).sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>{
+      const w=workoutById(s.workoutId); if(!w)return;
+      w.exercises.forEach(ex=>(s.sets[ex.id]||[]).forEach((set,i)=>{
+        if(!isSetLogged(set))return;
+        lines.push([s.date,w.title,w.dayName,ex.name,i+1,`${ex.min}-${ex.max}`,set.weight,store.unit,set.reps,set.rir,set.done?'yes':'no']);
+      }));
+    });
+    const csv=lines.map(row=>row.map(value=>`"${String(value??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`GymWorkoutTracker-workouts-${dateKey()}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast('CSV export created');
+  }
+  document.addEventListener('click', event => {
+    const tabButton=event.target.closest('[data-tab]');
+    if(tabButton) { setActiveTab(tabButton.dataset.tab); return; }
+    const actionEl=event.target.closest('[data-action]'); if(!actionEl)return;
+    const action=actionEl.dataset.action;
+    if(action==='go-tab') setActiveTab(actionEl.dataset.tab);
+    else if(action==='start-rest') startTimer(Number(actionEl.dataset.seconds), `${actionEl.dataset.label} · rest`);
+    else if(action==='toggle-set') { /* handled by the checkbox change event */ }
+    else if(action==='clear-exercise') clearExercise(actionEl);
+    else if(action==='timer-pause') pauseTimer();
+    else if(action==='timer-resume') resumeTimer();
+    else if(action==='timer-reset') resetTimer();
+    else if(action==='timer-dismiss') { store.timer=null; saveStore(); renderTimer(); }
+    else if(action==='export-csv') exportCsv();
+  });
+  document.addEventListener('input', event=>{const el=event.target.closest('[data-action="set-field"]');if(el)updateSetField(el);});
+  document.addEventListener('change', event=>{
+    const el=event.target.closest('[data-action="set-field"]'); if(el) updateSetField(el);
+    if(event.target.id==='progressSelect') { selectedProgress=event.target.value; render(); }
+  });
+  document.addEventListener('change', event=>{const el=event.target.closest('[data-action="toggle-set"]'); if(el)toggleSet(el);});
+  window.addEventListener('online',()=>{$('#connectionLabel').textContent='Saved on device';});
+  window.addEventListener('offline',()=>{$('#connectionLabel').textContent='Offline · local save';});
+  if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+  }
+  if(store.timer && !store.timer.paused && remainingMs(store.timer)<=0) { store.timer.remainingMs=0; store.timer.endAt=null; store.timer.paused=true; saveStore(); }
+  render(); timerInterval=setInterval(tickTimer,1000);
+})();
+</script>
 </body>
 </html>

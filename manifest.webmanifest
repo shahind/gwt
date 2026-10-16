@@ -2,6 +2,7 @@
   "name": "Gym Workout Tracker",
   "short_name": "GWT",
   "description": "Offline workout tracking and rest timer",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

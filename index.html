@@ -148,6 +148,11 @@
     .entry-detail { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; }
     .entry-result { text-align: right; font-size: 12px; font-weight: 850; white-space: nowrap; }
     .entry-result small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; font-weight: 650; }
+    .backup-panel { display:grid; gap:11px; margin:0 0 15px; padding:14px; border:1px solid var(--line); background:var(--paper); border-radius:15px; }
+    .backup-panel strong { font-size:13px; }
+    .backup-panel p { color:var(--muted); font-size:11px; line-height:1.5; margin:5px 0 0; }
+    .backup-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .backup-actions .secondary-button { width:100%; min-height:40px; font-size:11px; padding:8px; }
     .history-list { display: grid; gap: 11px; }
     .history-card { background: var(--paper); border: 1px solid var(--line); border-radius: 15px; padding: 14px; }
     .history-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
@@ -200,12 +205,12 @@
       <div class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none"><path d="M4 8v8M7 5v14M17 5v14M20 8v8M7 12h10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
       </div>
-      <div class="brand-copy"><p class="eyebrow">Your training log</p><h1>GWT</h1></div>
+      <div class="brand-copy"><p class="eyebrow">Your training log</p><h1>gwt</h1></div>
       <div class="offline-pill"><span class="offline-dot"></span><span id="connectionLabel">Local save on</span></div>
     </header>
 
     <main id="mainView" class="page" aria-live="polite"></main>
-    <p class="footer-note">Your workout data stays on this device. Export a backup regularly if you switch phones or clear browser data.</p>
+    <p class="footer-note">Workout data is stored on this device. Download a JSON backup before deleting/reinstalling the Home Screen app or switching devices.</p>
   </div>
 
   <section class="timer-dock" id="timerDock" hidden aria-live="polite">
@@ -227,67 +232,70 @@
 <script>
 (() => {
   'use strict';
-  const STORAGE_KEY = 'GWT.pwa.v1';
-  const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const STORAGE_KEY = 'gwt.pwa.v1';
+  const BACKUP_KEY = 'gwt.pwa.backup.v1';
+  const PREVIOUS_KEY = 'gwt.pwa.previous.v1';
+  let recoveredLocalBackup = false;
+  const DAYS = ['Sunday(5-7)', 'Monday', 'Tuesday(7-9)', 'Wednesday', 'Thursday(7-9)', 'Friday', 'Saturday(4-7)'];
   const WORKOUTS = [
     {
       id: 'upper-a', day: 2, dayName: 'Tuesday', title: 'Upper A', subtitle: 'Chest · Back · Arms · Side core',
       exercises: [
-        { id:'chest-press', priority:'isolation', name:'Chest Press Machine', sets:3, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
-        { id:'incline-press', priority:'isolation', name:'MTS Incline Press Machine', sets:2, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
-        { id:'seated-row', priority:'isolation', name:'Seated Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
-        { id:'front-pulldown', priority:'isolation', name:'MTS Front Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
+        { id:'chest-press', priority:'primary', name:'Chest Press Machine', sets:3, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
+        { id:'incline-press', priority:'primary', name:'MTS Incline Press Machine', sets:2, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
+        { id:'seated-row', priority:'compound', name:'Seated Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'front-pulldown', priority:'compound', name:'MTS Front Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
         { id:'lateral-raise', priority:'isolation', name:'Dumbbell or Machine Lateral Raise', sets:3, min:13, max:15, target:'Side deltoids (shoulders)', tag:'Shoulders', rest:120 },
         { id:'biceps-curl', priority:'isolation', name:'Biceps Curl Machine', sets:2, min:13, max:15, target:'Biceps', tag:'Biceps', rest:120 },
         { id:'triceps-extension', priority:'isolation', name:'Triceps Extension Machine', sets:2, min:13, max:15, target:'Triceps', tag:'Triceps', rest:120 },
-        { id:'side-bend-left', priority:'isolation', name:'Single Dumbbell Side Bend — Left', sets:3, min:13, max:15, target:'Left obliques and quadratus lumborum', tag:'Side core', rest:120 },
-        { id:'side-bend-right', priority:'isolation', name:'Single Dumbbell Side Bend — Right', sets:3, min:13, max:15, target:'Right obliques and quadratus lumborum', tag:'Side core', rest:120 },
-        { id:'wrist-curl', priority:'isolation', name:'Dumbbell Wrist Curl', sets:2, min:18, max:20, target:'Wrist flexors and forearms', tag:'Forearms', rest:120 }
+        { id:'side-bend-left', priority:'small', name:'Single Dumbbell Side Bend — Left', sets:3, min:13, max:15, target:'Left obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'side-bend-right', priority:'small', name:'Single Dumbbell Side Bend — Right', sets:3, min:13, max:15, target:'Right obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'wrist-curl', priority:'small', name:'Dumbbell Wrist Curl', sets:2, min:18, max:20, target:'Wrist flexors and forearms', tag:'Forearms', rest:120 }
       ]
     },
     {
       id: 'upper-b', day: 4, dayName: 'Thursday', title: 'Upper B', subtitle: 'Chest · Back · Shoulders · Arms · Core',
       exercises: [
-        { id:'incline-press', priority:'isolation', name:'MTS Incline Press Machine', sets:3, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
-        { id:'shoulder-press', priority:'isolation', name:'Shoulder Press Machine', sets:2, min:10, max:12, target:'Front and side delts, triceps', tag:'Shoulders', rest:180, compound:true },
-        { id:'lat-pulldown', priority:'isolation', name:'Lat Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
-        { id:'mts-row', priority:'isolation', name:'MTS Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'incline-press', priority:'primary', name:'MTS Incline Press Machine', sets:3, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
+        { id:'shoulder-press', priority:'compound', name:'Shoulder Press Machine', sets:2, min:10, max:12, target:'Front and side delts, triceps', tag:'Shoulders', rest:180, compound:true },
+        { id:'lat-pulldown', priority:'compound', name:'Lat Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
+        { id:'mts-row', priority:'compound', name:'MTS Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
         { id:'pec-fly', priority:'isolation', name:'Pec Fly Machine', sets:2, min:13, max:15, target:'Chest (pectorals)', tag:'Chest', rest:120 },
         { id:'reverse-fly', priority:'isolation', name:'Reverse Pec Fly Machine', sets:3, min:13, max:15, target:'Rear delts and upper back', tag:'Rear delts', rest:120 },
         { id:'biceps-curl', priority:'isolation', name:'Biceps Curl Machine (or alternative)', sets:2, min:13, max:15, target:'Biceps', tag:'Biceps', rest:120 },
-        { id:'triceps-press', priority:'isolation', name:'Triceps Press Machine', sets:2, min:10, max:12, target:'Triceps; seated press/dip-style machine', tag:'Triceps', rest:180, compound:true },
-        { id:'torso-rotation-left', priority:'isolation', name:'Torso Rotation Machine — Left', sets:2, min:13, max:15, target:'Obliques and trunk rotators (left direction)', tag:'Core', rest:120 },
-        { id:'torso-rotation-right', priority:'isolation', name:'Torso Rotation Machine — Right', sets:2, min:13, max:15, target:'Obliques and trunk rotators (right direction)', tag:'Core', rest:120 },
-        { id:'reverse-wrist-curl', priority:'isolation', name:'Reverse Dumbbell Wrist Curl', sets:2, min:18, max:20, target:'Wrist extensors and forearms', tag:'Forearms', rest:120 }
+        { id:'triceps-press', priority:'compound', name:'Triceps Press Machine', sets:2, min:10, max:12, target:'Triceps; seated press/dip-style machine', tag:'Triceps', rest:180, compound:true },
+        { id:'torso-rotation-left', priority:'small', name:'Torso Rotation Machine — Left', sets:2, min:13, max:15, target:'Obliques and trunk rotators (left direction)', tag:'Core', rest:120 },
+        { id:'torso-rotation-right', priority:'small', name:'Torso Rotation Machine — Right', sets:2, min:13, max:15, target:'Obliques and trunk rotators (right direction)', tag:'Core', rest:120 },
+        { id:'reverse-wrist-curl', priority:'small', name:'Reverse Dumbbell Wrist Curl', sets:2, min:18, max:20, target:'Wrist extensors and forearms', tag:'Forearms', rest:120 }
       ]
     },
     {
       id: 'upper-c', day: 6, dayName: 'Saturday', title: 'Upper C', subtitle: 'Chest · Back · Shoulders · Arms · Core',
       exercises: [
-        { id:'chest-press', priority:'isolation', name:'Chest Press Machine', sets:2, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
-        { id:'assisted-pullup', priority:'isolation', name:'Assisted Pull Up Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true, assistance:true },
-        { id:'seated-row', priority:'isolation', name:'Seated Row Machine', sets:1, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
-        { id:'mts-row', priority:'isolation', name:'MTS Row Machine', sets:1, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'chest-press', priority:'primary', name:'Chest Press Machine', sets:2, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
+        { id:'assisted-pullup', priority:'compound', name:'Assisted Pull Up Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true, assistance:true },
+        { id:'seated-row', priority:'compound', name:'Seated Row Machine', sets:1, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'mts-row', priority:'compound', name:'MTS Row Machine', sets:1, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
         { id:'pec-fly', priority:'isolation', name:'Pec Fly Machine', sets:2, min:13, max:15, target:'Chest (pectorals)', tag:'Chest', rest:120 },
         { id:'lateral-raise', priority:'isolation', name:'Dumbbell or Machine Lateral Raise', sets:3, min:13, max:15, target:'Side deltoids (shoulders)', tag:'Shoulders', rest:120 },
         { id:'reverse-fly', priority:'isolation', name:'Reverse Pec Fly Machine', sets:2, min:13, max:15, target:'Rear delts and upper back', tag:'Rear delts', rest:120 },
         { id:'shrug', priority:'isolation', name:'Dumbbell or Machine Shrug', sets:3, min:13, max:15, target:'Upper trapezius', tag:'Traps', rest:120 },
         { id:'hammer-curl', priority:'isolation', name:'Seated Dumbbell Hammer Curl', sets:2, min:13, max:15, target:'Brachialis, brachioradialis and biceps', tag:'Biceps', rest:120 },
         { id:'triceps-extension', priority:'isolation', name:'Triceps Extension Machine', sets:2, min:13, max:15, target:'Triceps', tag:'Triceps', rest:120 },
-        { id:'side-bend-left', priority:'isolation', name:'Single Dumbbell Side Bend — Left', sets:3, min:13, max:15, target:'Left obliques and quadratus lumborum', tag:'Side core', rest:120 },
-        { id:'side-bend-right', priority:'isolation', name:'Single Dumbbell Side Bend — Right', sets:3, min:13, max:15, target:'Right obliques and quadratus lumborum', tag:'Side core', rest:120 },
-        { id:'ab-crunch', priority:'isolation', name:'Abdominal Crunch Machine', sets:3, min:13, max:15, target:'Rectus abdominis (front abs)', tag:'Abs', rest:120 }
+        { id:'side-bend-left', priority:'small', name:'Single Dumbbell Side Bend — Left', sets:3, min:13, max:15, target:'Left obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'side-bend-right', priority:'small', name:'Single Dumbbell Side Bend — Right', sets:3, min:13, max:15, target:'Right obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'ab-crunch', priority:'small', name:'Abdominal Crunch Machine', sets:3, min:13, max:15, target:'Rectus abdominis (front abs)', tag:'Abs', rest:120 }
       ]
     },
     {
       id: 'legs', day: 0, dayName: 'Sunday', title: 'Legs', subtitle: 'Quads · Hamstrings · Glutes · Calves',
       exercises: [
-        { id:'leg-press', priority:'isolation', name:'Leg Press Machine', sets:4, min:10, max:12, target:'Quadriceps, glutes, adductors', tag:'Quads + glutes', rest:180, compound:true },
-        { id:'glute-drive', priority:'isolation', name:'Hip-Thrust / Glute-Drive Machine', sets:3, min:10, max:12, target:'Gluteus maximus, hamstrings', tag:'Glutes', rest:180, compound:true },
+        { id:'leg-press', priority:'primary', name:'Leg Press Machine', sets:4, min:10, max:12, target:'Quadriceps, glutes, adductors', tag:'Quads + glutes', rest:180, compound:true },
+        { id:'glute-drive', priority:'compound', name:'Hip-Thrust / Glute-Drive Machine', sets:3, min:10, max:12, target:'Gluteus maximus, hamstrings', tag:'Glutes', rest:180, compound:true },
         { id:'seated-leg-curl', priority:'isolation', name:'Seated Leg Curl Machine', sets:4, min:13, max:15, target:'Hamstrings', tag:'Hamstrings', rest:120 },
         { id:'leg-extension', priority:'isolation', name:'Leg Extension Machine', sets:3, min:13, max:15, target:'Quadriceps', tag:'Quads', rest:120 },
-        { id:'back-extension', priority:'isolation', name:'Back Extension Machine', sets:2, min:18, max:20, target:'Spinal erectors, glutes, hamstrings', tag:'Posterior chain', rest:120 },
-        { id:'calf-extension', priority:'isolation', name:'Calf Extension Machine', sets:4, min:13, max:15, target:'Gastrocnemius and soleus (calves)', tag:'Calves', rest:120 },
+        { id:'back-extension', priority:'small', name:'Back Extension Machine', sets:2, min:18, max:20, target:'Spinal erectors, glutes, hamstrings', tag:'Posterior chain', rest:120 },
+        { id:'calf-extension', priority:'small', name:'Calf Extension Machine', sets:4, min:13, max:15, target:'Gastrocnemius and soleus (calves)', tag:'Calves', rest:120 },
       ]
     }
   ];
@@ -302,17 +310,43 @@
   let toastTimeout = null;
   let store = loadStore();
 
-  function loadStore() {
+  function parsedStore(raw) {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { sessions: {}, timer: null, unit: 'lb' };
-      const parsed = JSON.parse(raw);
-      return { sessions: parsed.sessions || {}, timer: parsed.timer || null, unit: parsed.unit || 'lb' };
-    } catch (_) { return { sessions: {}, timer: null, unit: 'lb' }; }
+      const value = JSON.parse(raw || 'null');
+      if (!value || typeof value !== 'object' || !value.sessions || typeof value.sessions !== 'object') return null;
+      return { sessions: value.sessions, timer: value.timer || null, unit: value.unit || 'lb' };
+    } catch (_) { return null; }
+  }
+  function sessionCount(candidate) { return candidate ? Object.keys(candidate.sessions || {}).length : 0; }
+  function loadStore() {
+    // Try the live store first, then rolling local snapshots. Never initialize blank data
+    // over a valid snapshot just because the primary key is missing or malformed.
+    let main = null, backup = null, previous = null;
+    try {
+      main = parsedStore(localStorage.getItem(STORAGE_KEY));
+      backup = parsedStore(localStorage.getItem(BACKUP_KEY));
+      previous = parsedStore(localStorage.getItem(PREVIOUS_KEY));
+    } catch (_) {}
+    const candidates = [main, backup, previous].filter(Boolean);
+    candidates.sort((a,b) => sessionCount(b) - sessionCount(a));
+    const best = candidates[0];
+    if (best) {
+      recoveredLocalBackup = best !== main;
+      return best;
+    }
+    return { sessions: {}, timer: null, unit: 'lb' };
   }
   function saveStore() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(store)); $('#connectionLabel').textContent = 'Saved on device'; }
-    catch (_) { $('#connectionLabel').textContent = 'Save unavailable'; }
+    try {
+      const serialized = JSON.stringify(store);
+      const oldMain = parsedStore(localStorage.getItem(STORAGE_KEY));
+      // Keep one prior snapshot when it contains records. A normal update should never clear it.
+      if (oldMain && sessionCount(oldMain) > 0) localStorage.setItem(PREVIOUS_KEY, JSON.stringify(oldMain));
+      localStorage.setItem(STORAGE_KEY, serialized);
+      localStorage.setItem(BACKUP_KEY, serialized);
+      $('#connectionLabel').textContent = recoveredLocalBackup ? 'Recovered local backup' : 'Saved on device';
+      recoveredLocalBackup = false;
+    } catch (_) { $('#connectionLabel').textContent = 'Save unavailable · export a backup'; }
   }
   function dateKey(date = new Date()) {
     const y = date.getFullYear(); const m = String(date.getMonth()+1).padStart(2,'0'); const d = String(date.getDate()).padStart(2,'0');
@@ -420,10 +454,10 @@
     return `<article class="exercise-card" id="exercise-${esc(ex.id)}"><div class="exercise-top"><div class="exercise-title-wrap"><h3>${esc(ex.name)}</h3><p class="target-muscle">Target: ${esc(ex.target)}</p></div><span class="muscle-pill">${esc(ex.tag)}</span></div><div class="prescription-row"><div class="prescription">${ex.sets} sets · ${ex.min}–${ex.max} reps</div><button class="rest-button" data-action="start-rest" data-seconds="${ex.rest}" data-label="${esc(ex.name)}">${iconClock()} Rest ${Math.floor(ex.rest/60)}:00</button></div><p class="last-performance">${esc(p)}</p><div class="sets-header"><span>Done</span><span>Set</span><span>${esc(targetLabel)}</span><span>Reps</span><span>RIR</span></div>${rows}<div class="exercise-footer"><button class="small-action" data-action="clear-exercise" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}">Clear this exercise</button></div></article>`;
   }
   const PRIORITY_GROUPS = [
-    { id:'primary', title:'Priority compound lifts', hint:'Do these first · order within this group is flexible', className:'priority-primary' },
-    { id:'compound', title:'Other compound lifts', hint:'Finish this group before moving on', className:'priority-compound' },
-    { id:'isolation', title:'Isolation exercises', hint:'Finish this group before moving on', className:'priority-isolation' },
-    { id:'small', title:'Smaller muscles & core', hint:'Finish here · order within this group is flexible', className:'priority-small' }
+    { id:'primary', title:'Green · Priority compounds', hint:'Do first · swap within this group', className:'priority-primary' },
+    { id:'compound', title:'Yellow · Other compounds', hint:'Finish before orange · swap within group', className:'priority-compound' },
+    { id:'isolation', title:'Orange · Isolation exercises', hint:'Finish before red · swap within group', className:'priority-isolation' },
+    { id:'small', title:'Red · Smaller muscles & core', hint:'Finish here · swap within group', className:'priority-small' }
   ];
   function renderGroupedExercises(workout, session) {
     return PRIORITY_GROUPS.map(group => {
@@ -498,8 +532,9 @@
   }
   function renderHistory() {
     const items=Object.values(store.sessions).filter(s=>{const w=workoutById(s.workoutId);return w&&hasAnyData(s,w)}).sort((a,b)=>b.date.localeCompare(a.date));
-    let html=`<div class="section-heading" style="margin-top:0"><div><h2>Workout history</h2><p>Your completed and in-progress sessions.</p></div><button class="text-link" data-action="export-csv">Export CSV ↓</button></div>`;
-    if(!items.length) return html+`<div class="empty-state">Your training history will appear here when you log your first set. Your entries are saved automatically on this device.</div>`;
+    let html=`<div class="section-heading" style="margin-top:0"><div><h2>Workout history</h2><p>Your completed and in-progress sessions.</p></div><button class="text-link" data-action="export-csv">Export CSV ↓</button></div>
+      <section class="backup-panel"><div><strong>Backup & restore</strong><p>Save a JSON backup before reinstalling or changing devices. You can restore a JSON backup or an earlier gwt CSV export.</p></div><div class="backup-actions"><button class="secondary-button" data-action="backup-json">Download JSON backup</button><button class="secondary-button" data-action="restore-json">Restore JSON</button><button class="secondary-button" data-action="restore-csv">Restore CSV</button></div><input id="backupFileInput" type="file" accept="application/json,.json" hidden><input id="backupCsvInput" type="file" accept="text/csv,.csv" hidden></section>`;
+    if(!items.length) return html+`<div class="empty-state">No saved workout records are visible in this app storage. If you have an earlier JSON backup or gwt CSV export, use Restore JSON or Restore CSV. If the old installation's browser data was deleted and no backup exists, the app cannot retrieve it remotely.</div>`;
     html+=`<div class="history-list">${items.map(session=>{
       const w=workoutById(session.workoutId); const p=progressFor(session,w); const complete=isWorkoutComplete(session,w); const pct=Math.round(100*p.done/p.total);
       const loggedExercises=w.exercises.map(ex=>({ex,sets:session.sets[ex.id]||[]})).filter(x=>x.sets.some(set=>isSetLogged(set)));
@@ -507,6 +542,99 @@
     }).join('')}</div><div style="display:flex;justify-content:center;margin-top:15px"><button class="secondary-button" data-action="export-csv">Export all sessions (CSV)</button></div>`;
     return html;
   }
+  function exportJsonBackup() {
+    try {
+      const payload={app:'gwt',schemaVersion:1,exportedAt:new Date().toISOString(),store};
+      const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+      const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`gwt-backup-${dateKey()}.json`;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1500);
+      showToast('JSON backup downloaded');
+    } catch (_) { showToast('Backup failed. Try again.'); }
+  }
+  async function importJsonBackup(file) {
+    if(!file) return;
+    try {
+      const payload=JSON.parse(await file.text());
+      const incoming=payload?.store || payload;
+      if(!incoming || typeof incoming.sessions!=='object' || !incoming.sessions) throw new Error('Invalid backup file');
+      const imported=Object.entries(incoming.sessions);
+      if(!imported.length) throw new Error('This backup contains no sessions');
+      let added=0, merged=0;
+      for(const [key,backupSession] of imported) {
+        if(!backupSession || typeof backupSession!=='object' || !backupSession.workoutId || !backupSession.date) continue;
+        const current=store.sessions[key];
+        if(!current) { store.sessions[key]=backupSession; added++; continue; }
+        merged++;
+        current.sets=current.sets||{};
+        for(const [exerciseId, backupSets] of Object.entries(backupSession.sets||{})) {
+          if(!Array.isArray(current.sets[exerciseId])) current.sets[exerciseId]=[];
+          backupSets.forEach((backupSet,i)=>{
+            const live=current.sets[exerciseId][i] || {weight:'',reps:'',rir:'',done:false};
+            current.sets[exerciseId][i]={
+              weight: live.weight!=='' && live.weight!=null ? live.weight : (backupSet.weight ?? ''),
+              reps: live.reps!=='' && live.reps!=null ? live.reps : (backupSet.reps ?? ''),
+              rir: live.rir!=='' && live.rir!=null ? live.rir : (backupSet.rir ?? ''),
+              done: !!(live.done || backupSet.done)
+            };
+          });
+        }
+        current.updatedAt=Math.max(Number(current.updatedAt)||0,Number(backupSession.updatedAt)||0)||null;
+      }
+      if(incoming.unit) store.unit=incoming.unit;
+      saveStore(); render(); showToast(`Backup restored · ${added} added, ${merged} merged`);
+    } catch (_) { showToast('Could not restore this file. Choose a gwt JSON backup.'); }
+  }
+  function parseCsvRows(text) {
+    const rows=[]; let row=[], field='', quoted=false;
+    for(let i=0;i<text.length;i++) {
+      const ch=text[i];
+      if(ch==='"') {
+        if(quoted && text[i+1]==='"') { field+='"'; i++; }
+        else quoted=!quoted;
+      } else if(ch===',' && !quoted) { row.push(field); field=''; }
+      else if((ch==='\n' || ch==='\r') && !quoted) {
+        if(ch==='\r' && text[i+1]==='\n') i++;
+        row.push(field); field='';
+        if(row.some(cell=>cell.trim()!=='')) rows.push(row);
+        row=[];
+      } else field+=ch;
+    }
+    if(field!=='' || row.length) { row.push(field); rows.push(row); }
+    if(!rows.length) return [];
+    const headers=rows.shift().map(h=>h.trim().toLowerCase());
+    return rows.map(values=>Object.fromEntries(headers.map((h,i)=>[h,(values[i]??'').trim()])));
+  }
+  async function importCsvBackup(file) {
+    if(!file) return;
+    try {
+      const storeWasEmpty=!Object.values(store.sessions).some(session=>Object.values(session.sets||{}).some(sets=>Array.isArray(sets)&&sets.some(isSetLogged)));
+      const rows=parseCsvRows(await file.text());
+      if(!rows.length || !('date' in rows[0]) || !('workout' in rows[0]) || !('exercise' in rows[0])) throw new Error('Not a gwt CSV');
+      let restoredSets=0, skipped=0;
+      for(const row of rows) {
+        if(!row.date || !/^\d{4}-\d{2}-\d{2}$/.test(row.date)) { skipped++; continue; }
+        const workout=WORKOUTS.find(w=>w.title.toLowerCase()===String(row.workout).toLowerCase() || w.id===row.workout);
+        if(!workout) { skipped++; continue; }
+        const exercise=workout.exercises.find(ex=>ex.name.toLowerCase()===String(row.exercise).toLowerCase());
+        if(!exercise) { skipped++; continue; }
+        const setIndex=Math.max(0,Number(row.set||1)-1);
+        if(!Number.isInteger(setIndex) || setIndex>=exercise.sets) { skipped++; continue; }
+        const key=sessionKey(row.date,workout.id);
+        const session=store.sessions[key] || (store.sessions[key]=makeBlankSession(row.date,workout));
+        const arr=session.sets[exercise.id] || (session.sets[exercise.id]=Array.from({length:exercise.sets},()=>({weight:'',reps:'',rir:'',done:false})));
+        const live=arr[setIndex] || {weight:'',reps:'',rir:'',done:false};
+        if((live.weight==='' || live.weight==null) && row.weight) live.weight=row.weight;
+        if((live.reps==='' || live.reps==null) && row.reps) live.reps=row.reps;
+        if((live.rir==='' || live.rir==null) && row.rir) live.rir=row.rir;
+        live.done=!!(live.done || String(row.checked).toLowerCase()==='yes' || String(row.checked).toLowerCase()==='true');
+        arr[setIndex]=live; session.updatedAt=Date.now(); restoredSets++;
+      }
+      if(!restoredSets) throw new Error('No compatible gwt rows found');
+      if(storeWasEmpty) { const firstUnit=rows.find(r=>r.unit)?.unit; if(firstUnit) store.unit=firstUnit; }
+      saveStore(); render(); showToast(`CSV restored · ${restoredSets} set rows${skipped?` · ${skipped} skipped`:''}`);
+    } catch (_) { showToast('Could not restore this CSV. Choose a gwt workout export.'); }
+  }
+
   function renderTimer() {
     const dock=$('#timerDock'); const t=store.timer;
     if(!t) { dock.hidden=true; return; }
@@ -549,7 +677,7 @@
     const title='Rest finished';
     const body=`${timer.label || 'Your rest timer'} is complete. Time for your next set.`;
     if('Notification' in window && Notification.permission==='granted') {
-      if(serviceWorkerRegistration?.showNotification) serviceWorkerRegistration.showNotification(title,{body,icon:'./icon-192.png',badge:'./icon-192.png',tag:'GWT-rest',renotify:true,data:{url:'./'}}).catch(()=>{});
+      if(serviceWorkerRegistration?.showNotification) serviceWorkerRegistration.showNotification(title,{body,icon:'./icon-192.png',badge:'./icon-192.png',tag:'gwt-rest',renotify:true,data:{url:'./'}}).catch(()=>{});
       else { try { new Notification(title,{body,icon:'./icon-192.png'}); } catch(_) {} }
     }
     if(document.visibilityState==='visible') showToast('Rest complete — get ready for your next set');
@@ -618,7 +746,7 @@
       }));
     });
     const csv=lines.map(row=>row.map(value=>`"${String(value??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
-    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`GWT-workouts-${dateKey()}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast('CSV export created');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`gwt-workouts-${dateKey()}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast('CSV export created');
   }
   document.addEventListener('click', event => {
     const tabButton=event.target.closest('[data-tab]');
@@ -635,6 +763,9 @@
     else if(action==='timer-dismiss') { store.timer=null; saveStore(); renderTimer(); }
     else if(action==='enable-notifications') enableNotifications();
     else if(action==='export-csv') exportCsv();
+    else if(action==='backup-json') exportJsonBackup();
+    else if(action==='restore-json') $('#backupFileInput')?.click();
+    else if(action==='restore-csv') $('#backupCsvInput')?.click();
   });
   document.addEventListener('input', event=>{const el=event.target.closest('[data-action="set-field"]');if(el)updateSetField(el);});
   document.addEventListener('change', event=>{
@@ -642,10 +773,37 @@
     if(event.target.id==='progressSelect') { selectedProgress=event.target.value; render(); }
   });
   document.addEventListener('change', event=>{const el=event.target.closest('[data-action="toggle-set"]'); if(el)toggleSet(el);});
+  document.addEventListener('change', event=>{ if(event.target.id==='backupFileInput' && event.target.files?.[0]) { const file=event.target.files[0]; importJsonBackup(file).finally(()=>{ event.target.value=''; }); } if(event.target.id==='backupCsvInput' && event.target.files?.[0]) { const file=event.target.files[0]; importCsvBackup(file).finally(()=>{ event.target.value=''; }); } });
   window.addEventListener('online',()=>{$('#connectionLabel').textContent='Saved on device';});
   window.addEventListener('offline',()=>{$('#connectionLabel').textContent='Offline · local save';});
   if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').then(reg=>{serviceWorkerRegistration=reg;}).catch(()=>{}));
+    let hadController=!!navigator.serviceWorker.controller;
+    let reloadingForUpdate=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(hadController && !reloadingForUpdate) { reloadingForUpdate=true; location.reload(); }
+      hadController=true;
+    });
+    async function checkForAppUpdate(reg) {
+      try {
+        await reg.update();
+        if(reg.waiting && navigator.serviceWorker.controller) reg.waiting.postMessage({type:'SKIP_WAITING'});
+      } catch (_) {}
+    }
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
+      serviceWorkerRegistration=reg;
+      checkForAppUpdate(reg);
+      reg.addEventListener('updatefound',()=>{
+        const installing=reg.installing;
+        if(installing) installing.addEventListener('statechange',()=>{
+          if(installing.state==='installed' && navigator.serviceWorker.controller) showToast('Update downloaded · refreshing gwt');
+        });
+      });
+      window.addEventListener('focus',()=>checkForAppUpdate(reg));
+      document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') checkForAppUpdate(reg);});
+    }).catch(()=>{}));
+  }
+  if(navigator.storage && typeof navigator.storage.persist==='function') {
+    navigator.storage.persist().catch(()=>{});
   }
   if(store.timer && !store.timer.paused && remainingMs(store.timer)<=0) { store.timer.remainingMs=0; store.timer.endAt=null; store.timer.paused=true; saveStore(); }
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkExpiredTimerOnReturn();});

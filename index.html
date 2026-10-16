@@ -64,7 +64,22 @@
     .hero-progress-row strong { color: white; font-size: 12px; }
     .progress-track { width: 100%; height: 6px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.17); }
     .progress-fill { height: 100%; border-radius: inherit; background: var(--lime); transition: width .2s ease; }
-    .exercise-list { display: grid; gap: 12px; }
+    .exercise-list { display: grid; gap: 16px; }
+    .priority-group { border-radius: 15px; padding: 10px; border: 1px solid var(--line); }
+    .priority-group + .priority-group { margin-top: 2px; }
+    .priority-group-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 2px 9px; }
+    .priority-group-head strong { font-size:12px; line-height:1.25; }
+    .priority-group-head span { font-size:10px; font-weight:750; opacity:.8; text-align:right; }
+    .priority-group .exercise-list-inner { display:grid; gap:10px; }
+    .priority-primary { background:#e8f5e9; border-color:#a5d6a7; }
+    .priority-compound { background:#fff6d8; border-color:#f0d477; }
+    .priority-isolation { background:#fff0e4; border-color:#f3bd91; }
+    .priority-small { background:#fde9e9; border-color:#efb0b0; }
+    .priority-primary .priority-group-head strong { color:#216e39; }
+    .priority-compound .priority-group-head strong { color:#86600a; }
+    .priority-isolation .priority-group-head strong { color:#a34d0b; }
+    .priority-small .priority-group-head strong { color:#a52d2d; }
+    .priority-group .exercise-card { background:rgba(255,255,255,.88); }
     .exercise-card { padding: 15px 14px 13px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 3px 12px rgba(24,43,32,.025); }
     .exercise-top { display: flex; align-items: flex-start; gap: 9px; justify-content: space-between; }
     .exercise-title-wrap { min-width: 0; }
@@ -83,8 +98,8 @@
     .set-check { width: 23px; height: 23px; accent-color: var(--green); justify-self: center; cursor: pointer; }
     .set-number { color: #6e7b72; font-size: 11px; font-weight: 750; }
     .field-wrap { min-width: 0; }
-    .set-input, .rir-select { width: 100%; min-width: 0; height: 31px; background: #fbfcfa; color: var(--ink); border: 1px solid #dfe6de; border-radius: 8px; padding: 0 7px; font-size: 12px; font-weight: 700; }
-    .set-input::placeholder { color: #a0aaa2; font-size: 10px; font-weight: 600; }
+    .set-input, .rir-select { width: 100%; min-width: 0; height: 31px; background: #fbfcfa; color: var(--ink); border: 1px solid #dfe6de; border-radius: 8px; padding: 0 7px; font-size: 16px; font-weight: 700; }
+    .set-input::placeholder { color: #a0aaa2; opacity: 1; font-size: 12px; font-weight: 600; }
     .rir-select { padding: 0 4px; font-size: 11px; }
     .exercise-footer { display: flex; justify-content: flex-end; padding-top: 8px; }
     .small-action { border: 0; background: transparent; padding: 3px 0; color: var(--green); font-size: 10px; font-weight: 800; }
@@ -112,6 +127,7 @@
     .summary-chevron { color: var(--muted); width: 16px; height: 16px; flex: 0 0 auto; transition: transform .15s; }
     details[open] .summary-chevron { transform: rotate(180deg); }
     .plan-table { padding: 0 15px 15px; }
+    .plan-priority-label { padding:9px 0 5px; margin-top:4px; font-size:10px; font-weight:850; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
     .plan-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; padding: 10px 0; border-top: 1px solid #edf0ec; align-items: start; }
     .plan-line strong { display: block; font-size: 11px; line-height: 1.35; }
     .plan-line small { display: block; color: var(--muted); font-size: 10px; line-height: 1.4; margin-top: 3px; }
@@ -184,7 +200,7 @@
       <div class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none"><path d="M4 8v8M7 5v14M17 5v14M20 8v8M7 12h10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
       </div>
-      <div class="brand-copy"><p class="eyebrow">Your training log</p><h1>GymWorkoutTracker</h1></div>
+      <div class="brand-copy"><p class="eyebrow">Your training log</p><h1>GWT</h1></div>
       <div class="offline-pill"><span class="offline-dot"></span><span id="connectionLabel">Local save on</span></div>
     </header>
 
@@ -211,67 +227,67 @@
 <script>
 (() => {
   'use strict';
-  const STORAGE_KEY = 'GymWorkoutTracker.pwa.v1';
+  const STORAGE_KEY = 'GWT.pwa.v1';
   const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const WORKOUTS = [
     {
-      id: 'upper-a', day: 2, dayName: 'Tuesday(7-9)', title: 'Upper A', subtitle: 'Chest · Back · Arms · Side core',
+      id: 'upper-a', day: 2, dayName: 'Tuesday', title: 'Upper A', subtitle: 'Chest · Back · Arms · Side core',
       exercises: [
-        { id:'chest-press', name:'Chest Press Machine', sets:3, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
-        { id:'seated-row', name:'Seated Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
-        { id:'incline-press', name:'MTS Incline Press Machine', sets:2, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
-        { id:'front-pulldown', name:'MTS Front Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
-        { id:'lateral-raise', name:'Dumbbell or Machine Lateral Raise', sets:3, min:13, max:15, target:'Side deltoids (shoulders)', tag:'Shoulders', rest:120 },
-        { id:'biceps-curl', name:'Biceps Curl Machine', sets:2, min:13, max:15, target:'Biceps', tag:'Biceps', rest:120 },
-        { id:'triceps-extension', name:'Triceps Extension Machine', sets:2, min:13, max:15, target:'Triceps', tag:'Triceps', rest:120 },
-        { id:'side-bend-left', name:'Single Dumbbell Side Bend — Left', sets:3, min:13, max:15, target:'Left obliques and quadratus lumborum', tag:'Side core', rest:120 },
-        { id:'side-bend-right', name:'Single Dumbbell Side Bend — Right', sets:3, min:13, max:15, target:'Right obliques and quadratus lumborum', tag:'Side core', rest:120 },
-        { id:'wrist-curl', name:'Dumbbell Wrist Curl', sets:2, min:18, max:20, target:'Wrist flexors and forearms', tag:'Forearms', rest:120 }
+        { id:'chest-press', priority:'isolation', name:'Chest Press Machine', sets:3, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
+        { id:'incline-press', priority:'isolation', name:'MTS Incline Press Machine', sets:2, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
+        { id:'seated-row', priority:'isolation', name:'Seated Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'front-pulldown', priority:'isolation', name:'MTS Front Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
+        { id:'lateral-raise', priority:'isolation', name:'Dumbbell or Machine Lateral Raise', sets:3, min:13, max:15, target:'Side deltoids (shoulders)', tag:'Shoulders', rest:120 },
+        { id:'biceps-curl', priority:'isolation', name:'Biceps Curl Machine', sets:2, min:13, max:15, target:'Biceps', tag:'Biceps', rest:120 },
+        { id:'triceps-extension', priority:'isolation', name:'Triceps Extension Machine', sets:2, min:13, max:15, target:'Triceps', tag:'Triceps', rest:120 },
+        { id:'side-bend-left', priority:'isolation', name:'Single Dumbbell Side Bend — Left', sets:3, min:13, max:15, target:'Left obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'side-bend-right', priority:'isolation', name:'Single Dumbbell Side Bend — Right', sets:3, min:13, max:15, target:'Right obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'wrist-curl', priority:'isolation', name:'Dumbbell Wrist Curl', sets:2, min:18, max:20, target:'Wrist flexors and forearms', tag:'Forearms', rest:120 }
       ]
     },
     {
-      id: 'upper-b', day: 4, dayName: 'Thursday(7-9)', title: 'Upper B', subtitle: 'Chest · Back · Shoulders · Arms · Core',
+      id: 'upper-b', day: 4, dayName: 'Thursday', title: 'Upper B', subtitle: 'Chest · Back · Shoulders · Arms · Core',
       exercises: [
-        { id:'incline-press', name:'MTS Incline Press Machine', sets:3, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
-        { id:'lat-pulldown', name:'Lat Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
-        { id:'mts-row', name:'MTS Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
-        { id:'pec-fly', name:'Pec Fly Machine', sets:2, min:13, max:15, target:'Chest (pectorals)', tag:'Chest', rest:120 },
-        { id:'shoulder-press', name:'Shoulder Press Machine', sets:2, min:10, max:12, target:'Front and side delts, triceps', tag:'Shoulders', rest:180, compound:true },
-        { id:'reverse-fly', name:'Reverse Pec Fly Machine', sets:3, min:13, max:15, target:'Rear delts and upper back', tag:'Rear delts', rest:120 },
-        { id:'biceps-curl', name:'Biceps Curl Machine (or alternative)', sets:2, min:13, max:15, target:'Biceps', tag:'Biceps', rest:120 },
-        { id:'triceps-press', name:'Triceps Press Machine', sets:2, min:10, max:12, target:'Triceps; seated press/dip-style machine', tag:'Triceps', rest:180, compound:true },
-        { id:'torso-rotation-left', name:'Torso Rotation Machine — Left', sets:2, min:13, max:15, target:'Obliques and trunk rotators (left direction)', tag:'Core', rest:120 },
-        { id:'torso-rotation-right', name:'Torso Rotation Machine — Right', sets:2, min:13, max:15, target:'Obliques and trunk rotators (right direction)', tag:'Core', rest:120 },
-        { id:'reverse-wrist-curl', name:'Reverse Dumbbell Wrist Curl', sets:2, min:18, max:20, target:'Wrist extensors and forearms', tag:'Forearms', rest:120 }
+        { id:'incline-press', priority:'isolation', name:'MTS Incline Press Machine', sets:3, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
+        { id:'shoulder-press', priority:'isolation', name:'Shoulder Press Machine', sets:2, min:10, max:12, target:'Front and side delts, triceps', tag:'Shoulders', rest:180, compound:true },
+        { id:'lat-pulldown', priority:'isolation', name:'Lat Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
+        { id:'mts-row', priority:'isolation', name:'MTS Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'pec-fly', priority:'isolation', name:'Pec Fly Machine', sets:2, min:13, max:15, target:'Chest (pectorals)', tag:'Chest', rest:120 },
+        { id:'reverse-fly', priority:'isolation', name:'Reverse Pec Fly Machine', sets:3, min:13, max:15, target:'Rear delts and upper back', tag:'Rear delts', rest:120 },
+        { id:'biceps-curl', priority:'isolation', name:'Biceps Curl Machine (or alternative)', sets:2, min:13, max:15, target:'Biceps', tag:'Biceps', rest:120 },
+        { id:'triceps-press', priority:'isolation', name:'Triceps Press Machine', sets:2, min:10, max:12, target:'Triceps; seated press/dip-style machine', tag:'Triceps', rest:180, compound:true },
+        { id:'torso-rotation-left', priority:'isolation', name:'Torso Rotation Machine — Left', sets:2, min:13, max:15, target:'Obliques and trunk rotators (left direction)', tag:'Core', rest:120 },
+        { id:'torso-rotation-right', priority:'isolation', name:'Torso Rotation Machine — Right', sets:2, min:13, max:15, target:'Obliques and trunk rotators (right direction)', tag:'Core', rest:120 },
+        { id:'reverse-wrist-curl', priority:'isolation', name:'Reverse Dumbbell Wrist Curl', sets:2, min:18, max:20, target:'Wrist extensors and forearms', tag:'Forearms', rest:120 }
       ]
     },
     {
-      id: 'upper-c', day: 6, dayName: 'Saturday(5-7)', title: 'Upper C', subtitle: 'Chest · Back · Shoulders · Arms · Core',
+      id: 'upper-c', day: 6, dayName: 'Saturday', title: 'Upper C', subtitle: 'Chest · Back · Shoulders · Arms · Core',
       exercises: [
-        { id:'chest-press', name:'Chest Press Machine', sets:2, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
-        { id:'assisted-pullup', name:'Assisted Pull Up Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true, assistance:true },
-        { id:'pec-fly', name:'Pec Fly Machine', sets:2, min:13, max:15, target:'Chest (pectorals)', tag:'Chest', rest:120 },
-        { id:'seated-row', name:'Seated Row Machine', sets:1, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
-        { id:'mts-row', name:'MTS Row Machine', sets:1, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
-        { id:'lateral-raise', name:'Dumbbell or Machine Lateral Raise', sets:3, min:13, max:15, target:'Side deltoids (shoulders)', tag:'Shoulders', rest:120 },
-        { id:'reverse-fly', name:'Reverse Pec Fly Machine', sets:2, min:13, max:15, target:'Rear delts and upper back', tag:'Rear delts', rest:120 },
-        { id:'hammer-curl', name:'Seated Dumbbell Hammer Curl', sets:2, min:13, max:15, target:'Brachialis, brachioradialis and biceps', tag:'Biceps', rest:120 },
-        { id:'triceps-extension', name:'Triceps Extension Machine', sets:2, min:13, max:15, target:'Triceps', tag:'Triceps', rest:120 },
-        { id:'shrug', name:'Dumbbell or Machine Shrug', sets:3, min:13, max:15, target:'Upper trapezius', tag:'Traps', rest:120 },
-        { id:'side-bend-left', name:'Single Dumbbell Side Bend — Left', sets:3, min:13, max:15, target:'Left obliques and quadratus lumborum', tag:'Side core', rest:120 },
-        { id:'side-bend-right', name:'Single Dumbbell Side Bend — Right', sets:3, min:13, max:15, target:'Right obliques and quadratus lumborum', tag:'Side core', rest:120 },
-        { id:'ab-crunch', name:'Abdominal Crunch Machine', sets:3, min:13, max:15, target:'Rectus abdominis (front abs)', tag:'Abs', rest:120 }
+        { id:'chest-press', priority:'isolation', name:'Chest Press Machine', sets:2, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
+        { id:'assisted-pullup', priority:'isolation', name:'Assisted Pull Up Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true, assistance:true },
+        { id:'seated-row', priority:'isolation', name:'Seated Row Machine', sets:1, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'mts-row', priority:'isolation', name:'MTS Row Machine', sets:1, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
+        { id:'pec-fly', priority:'isolation', name:'Pec Fly Machine', sets:2, min:13, max:15, target:'Chest (pectorals)', tag:'Chest', rest:120 },
+        { id:'lateral-raise', priority:'isolation', name:'Dumbbell or Machine Lateral Raise', sets:3, min:13, max:15, target:'Side deltoids (shoulders)', tag:'Shoulders', rest:120 },
+        { id:'reverse-fly', priority:'isolation', name:'Reverse Pec Fly Machine', sets:2, min:13, max:15, target:'Rear delts and upper back', tag:'Rear delts', rest:120 },
+        { id:'shrug', priority:'isolation', name:'Dumbbell or Machine Shrug', sets:3, min:13, max:15, target:'Upper trapezius', tag:'Traps', rest:120 },
+        { id:'hammer-curl', priority:'isolation', name:'Seated Dumbbell Hammer Curl', sets:2, min:13, max:15, target:'Brachialis, brachioradialis and biceps', tag:'Biceps', rest:120 },
+        { id:'triceps-extension', priority:'isolation', name:'Triceps Extension Machine', sets:2, min:13, max:15, target:'Triceps', tag:'Triceps', rest:120 },
+        { id:'side-bend-left', priority:'isolation', name:'Single Dumbbell Side Bend — Left', sets:3, min:13, max:15, target:'Left obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'side-bend-right', priority:'isolation', name:'Single Dumbbell Side Bend — Right', sets:3, min:13, max:15, target:'Right obliques and quadratus lumborum', tag:'Side core', rest:120 },
+        { id:'ab-crunch', priority:'isolation', name:'Abdominal Crunch Machine', sets:3, min:13, max:15, target:'Rectus abdominis (front abs)', tag:'Abs', rest:120 }
       ]
     },
     {
-      id: 'legs', day: 0, dayName: 'Sunday(5-7)', title: 'Legs', subtitle: 'Quads · Hamstrings · Glutes · Calves',
+      id: 'legs', day: 0, dayName: 'Sunday', title: 'Legs', subtitle: 'Quads · Hamstrings · Glutes · Calves',
       exercises: [
-        { id:'leg-press', name:'Leg Press Machine', sets:4, min:10, max:12, target:'Quadriceps, glutes, adductors', tag:'Quads + glutes', rest:180, compound:true },
-        { id:'seated-leg-curl', name:'Seated Leg Curl Machine', sets:4, min:13, max:15, target:'Hamstrings', tag:'Hamstrings', rest:120 },
-        { id:'leg-extension', name:'Leg Extension Machine', sets:3, min:13, max:15, target:'Quadriceps', tag:'Quads', rest:120 },
-        { id:'glute-drive', name:'Hip-Thrust / Glute-Drive Machine', sets:3, min:10, max:12, target:'Gluteus maximus, hamstrings', tag:'Glutes', rest:180, compound:true },
-        { id:'calf-extension', name:'Calf Extension Machine', sets:4, min:13, max:15, target:'Gastrocnemius and soleus (calves)', tag:'Calves', rest:120 },
-        { id:'back-extension', name:'Back Extension Machine', sets:2, min:18, max:20, target:'Spinal erectors, glutes, hamstrings', tag:'Posterior chain', rest:120 }
+        { id:'leg-press', priority:'isolation', name:'Leg Press Machine', sets:4, min:10, max:12, target:'Quadriceps, glutes, adductors', tag:'Quads + glutes', rest:180, compound:true },
+        { id:'glute-drive', priority:'isolation', name:'Hip-Thrust / Glute-Drive Machine', sets:3, min:10, max:12, target:'Gluteus maximus, hamstrings', tag:'Glutes', rest:180, compound:true },
+        { id:'seated-leg-curl', priority:'isolation', name:'Seated Leg Curl Machine', sets:4, min:13, max:15, target:'Hamstrings', tag:'Hamstrings', rest:120 },
+        { id:'leg-extension', priority:'isolation', name:'Leg Extension Machine', sets:3, min:13, max:15, target:'Quadriceps', tag:'Quads', rest:120 },
+        { id:'back-extension', priority:'isolation', name:'Back Extension Machine', sets:2, min:18, max:20, target:'Spinal erectors, glutes, hamstrings', tag:'Posterior chain', rest:120 },
+        { id:'calf-extension', priority:'isolation', name:'Calf Extension Machine', sets:4, min:13, max:15, target:'Gastrocnemius and soleus (calves)', tag:'Calves', rest:120 },
       ]
     }
   ];
@@ -281,6 +297,8 @@
   let activeTab = 'today';
   let selectedProgress = '';
   let timerInterval = null;
+  let serviceWorkerRegistration = null;
+  let lastTimerAlertId = null;
   let toastTimeout = null;
   let store = loadStore();
 
@@ -367,6 +385,11 @@
     const detail=setSummary(sets);
     return `Last (${formatDate(prev.date,{month:'short',day:'numeric'})}): ${detail}`;
   }
+  function lastWeekSets(workout, ex, date) {
+    const previousDate=dateKey(addDays(parseDate(date),-7));
+    const session=store.sessions[sessionKey(previousDate,workout.id)];
+    return session?.sets?.[ex.id] || [];
+  }
   function currentSessionInfo() {
     const workout=getTodayWorkout();
     if(!workout) return {workout:null,session:null};
@@ -385,15 +408,29 @@
   function renderExerciseCard(workout,session,ex) {
     const sets=session.sets[ex.id] || Array.from({length:ex.sets},()=>({weight:'',reps:'',rir:'',done:false}));
     const p=previousHint(workout,ex,session.date);
+    const lastWeek=lastWeekSets(workout,ex,session.date);
     const targetLabel=ex.assistance?'Assistance (lower is harder)':`Weight (${store.unit})`;
     const rows=sets.map((set,i)=>`<div class="set-row ${set.done?'is-done':''}" data-exercise-row="${esc(ex.id)}">
       <input class="set-check" type="checkbox" aria-label="Mark set ${i+1} complete" data-action="toggle-set" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}" ${set.done?'checked':''}>
       <span class="set-number">${i+1}</span>
-      <div class="field-wrap"><input class="set-input" aria-label="Set ${i+1} weight in ${store.unit}" type="number" inputmode="decimal" min="0" step="0.5" placeholder="${ex.assistance?'assist.':'weight'}" value="${esc(set.weight)}" data-action="set-field" data-field="weight" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}"></div>
-      <div class="field-wrap"><input class="set-input" aria-label="Set ${i+1} reps" type="number" inputmode="numeric" min="0" step="1" placeholder="${ex.min}–${ex.max}" value="${esc(set.reps)}" data-action="set-field" data-field="reps" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}"></div>
+      <div class="field-wrap"><input class="set-input" aria-label="Set ${i+1} weight in ${store.unit}" type="number" inputmode="decimal" min="0" step="0.5" placeholder="${esc(lastWeek[i]?.weight ? `↳ ${lastWeek[i].weight}` : (ex.assistance?'assist.':'weight'))}" value="${esc(set.weight)}" data-action="set-field" data-field="weight" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}"></div>
+      <div class="field-wrap"><input class="set-input" aria-label="Set ${i+1} reps" type="number" inputmode="numeric" min="0" step="1" placeholder="${esc(lastWeek[i]?.reps ? `↳ ${lastWeek[i].reps}` : `${ex.min}–${ex.max}`)}" value="${esc(set.reps)}" data-action="set-field" data-field="reps" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}"></div>
       <div class="field-wrap"><select class="rir-select" aria-label="Set ${i+1} reps in reserve" data-action="set-field" data-field="rir" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}"><option value="" ${set.rir===''?'selected':''}>RIR —</option>${[0,1,2,3,4,5].map(v=>`<option value="${v}" ${String(set.rir)===String(v)?'selected':''}>${v===5?'5+':v}</option>`).join('')}</select></div>
     </div>`).join('');
     return `<article class="exercise-card" id="exercise-${esc(ex.id)}"><div class="exercise-top"><div class="exercise-title-wrap"><h3>${esc(ex.name)}</h3><p class="target-muscle">Target: ${esc(ex.target)}</p></div><span class="muscle-pill">${esc(ex.tag)}</span></div><div class="prescription-row"><div class="prescription">${ex.sets} sets · ${ex.min}–${ex.max} reps</div><button class="rest-button" data-action="start-rest" data-seconds="${ex.rest}" data-label="${esc(ex.name)}">${iconClock()} Rest ${Math.floor(ex.rest/60)}:00</button></div><p class="last-performance">${esc(p)}</p><div class="sets-header"><span>Done</span><span>Set</span><span>${esc(targetLabel)}</span><span>Reps</span><span>RIR</span></div>${rows}<div class="exercise-footer"><button class="small-action" data-action="clear-exercise" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}">Clear this exercise</button></div></article>`;
+  }
+  const PRIORITY_GROUPS = [
+    { id:'primary', title:'Priority compound lifts', hint:'Do these first · order within this group is flexible', className:'priority-primary' },
+    { id:'compound', title:'Other compound lifts', hint:'Finish this group before moving on', className:'priority-compound' },
+    { id:'isolation', title:'Isolation exercises', hint:'Finish this group before moving on', className:'priority-isolation' },
+    { id:'small', title:'Smaller muscles & core', hint:'Finish here · order within this group is flexible', className:'priority-small' }
+  ];
+  function renderGroupedExercises(workout, session) {
+    return PRIORITY_GROUPS.map(group => {
+      const exercises = workout.exercises.filter(ex => (ex.priority || 'isolation') === group.id);
+      if (!exercises.length) return '';
+      return `<section class="priority-group ${group.className}"><div class="priority-group-head"><strong>${group.title}</strong><span>${exercises.length} exercises</span></div><div class="exercise-list-inner">${exercises.map(ex=>renderExerciseCard(workout,session,ex)).join('')}</div></section>`;
+    }).join('');
   }
   function renderToday() {
     const date=dateKey(); const workout=getTodayWorkout();
@@ -404,12 +441,12 @@
       return html;
     }
     const session=getSession(date,workout);
-    html+=`<div class="section-heading"><div><h2>Your session</h2><p>Log every working set as you go.</p></div><span style="color:var(--muted);font-size:10px;font-weight:800">${allSetCount(workout)} SETS</span></div>${renderSessionHero(workout,session,date)}<div class="section-heading"><div><h2>Exercises</h2><p>Enter actual weight, reps, and optional RIR.</p></div></div><div class="exercise-list">${workout.exercises.map(ex=>renderExerciseCard(workout,session,ex)).join('')}</div><p class="note">Progression rule: when every set reaches the top of its rep range with consistent technique and about 2 RIR, try the smallest useful weight increase next time. For assisted pull-ups, progress by reducing assistance.</p><div style="display:flex;justify-content:center;margin-top:16px"><button class="secondary-button" data-action="export-csv">Export workout log (CSV)</button></div>`;
+    html+=`<div class="section-heading"><div><h2>Your session</h2><p>Log every working set as you go.</p></div><span style="color:var(--muted);font-size:10px;font-weight:800">${allSetCount(workout)} SETS</span></div>${renderSessionHero(workout,session,date)}<div class="section-heading"><div><h2>Exercises</h2><p>Work through each color group before the next. You can change the order within a group if machines are busy.</p></div></div><div class="exercise-list">${renderGroupedExercises(workout,session)}</div><p class="note">Progression rule: when every set reaches the top of its rep range with consistent technique and about 2 RIR, try the smallest useful weight increase next time. For assisted pull-ups, progress by reducing assistance.</p><div style="display:flex;justify-content:center;margin-top:16px"><button class="secondary-button" data-action="export-csv">Export workout log (CSV)</button></div>`;
     return html;
   }
   function renderPlan() {
     const todayW=getTodayWorkout();
-    return `<div class="section-heading" style="margin-top:0"><div><h2>Your weekly plan</h2><p>Four training days · saved as your default split</p></div></div><p class="section-intro">Rest periods are set to 3 minutes for compound lifts and 2 minutes for isolation/core work. Enter the load you actually used on each set.</p><div class="plan-groups">${WORKOUTS.map(w=>`<details class="plan-group" ${todayW?.id===w.id?'open':''}><summary><div><div class="plan-day">${esc(w.dayName)}</div><strong>${esc(w.title)}</strong><small>${w.exercises.length} exercises · ${allSetCount(w)} sets</small></div><svg class="summary-chevron" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="plan-table">${w.exercises.map(ex=>`<div class="plan-line"><div><strong>${esc(ex.name)}</strong><small>${esc(ex.target)} · rest ${Math.floor(ex.rest/60)} min</small></div><div class="plan-dose">${ex.sets} × ${ex.min}–${ex.max}</div></div>`).join('')}</div></details>`).join('')}</div><p class="note">For side bends and torso rotations, left and right are tracked separately so each side gets its prescribed sets.</p>`;
+    return `<div class="section-heading" style="margin-top:0"><div><h2>Your weekly plan</h2><p>Four training days · saved as your default split</p></div></div><p class="section-intro">Exercises are grouped by priority: green = priority compounds, yellow = other compounds, orange = isolation, red = smaller muscles/core. You can swap exercises within a color group when equipment is busy, but finish the group before moving to the next color. Rest: 3 minutes for compounds, 2 minutes for isolation/core.</p><div class="plan-groups">${WORKOUTS.map(w=>`<details class="plan-group" ${todayW?.id===w.id?'open':''}><summary><div><div class="plan-day">${esc(w.dayName)}</div><strong>${esc(w.title)}</strong><small>${w.exercises.length} exercises · ${allSetCount(w)} sets</small></div><svg class="summary-chevron" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="plan-table">${PRIORITY_GROUPS.map(g=>{const es=w.exercises.filter(ex=>(ex.priority||'isolation')===g.id);return es.length?`<div class="plan-priority-label">${g.title}</div>${es.map(ex=>`<div class="plan-line"><div><strong>${esc(ex.name)}</strong><small>${esc(ex.target)} · rest ${Math.floor(ex.rest/60)} min</small></div><div class="plan-dose">${ex.sets} × ${ex.min}–${ex.max}</div></div>`).join('')}`:''}).join('')}</div></details>`).join('')}</div><p class="note">For side bends and torso rotations, left and right are tracked separately so each side gets its prescribed sets.</p>`;
   }
   function progressOptions() {
     const values=[];
@@ -478,18 +515,18 @@
     $('#timerValue').textContent=formatRemaining(remainingMs(t));
     if(t.paused && t.remainingMs<=0) {
       $('#timerLabel').textContent='Rest complete';
-      $('#timerControls').innerHTML='<button class="timer-dismiss" data-action="timer-dismiss">Done</button>';
+      $('#timerControls').innerHTML='<button data-action="enable-notifications">Alerts</button><button class="timer-dismiss" data-action="timer-dismiss">Done</button>';
     } else if(t.paused) {
-      $('#timerControls').innerHTML='<button data-action="timer-resume">Resume</button><button data-action="timer-reset">Reset</button>';
+      $('#timerControls').innerHTML='<button data-action="enable-notifications">Alerts</button><button data-action="timer-resume">Resume</button><button data-action="timer-reset">Reset</button>';
     } else {
-      $('#timerControls').innerHTML='<button data-action="timer-pause">Pause</button><button data-action="timer-reset">Reset</button>';
+      $('#timerControls').innerHTML='<button data-action="enable-notifications">Alerts</button><button data-action="timer-pause">Pause</button><button data-action="timer-reset">Reset</button>';
     }
   }
   function remainingMs(t) { if(!t) return 0; return t.paused ? Math.max(0,t.remainingMs||0) : Math.max(0,(t.endAt||Date.now())-Date.now()); }
   function formatRemaining(ms) { const sec=Math.max(0,Math.ceil(ms/1000)); return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`; }
   function startTimer(seconds,label='Rest timer') {
     const duration=Math.max(1,Number(seconds)||120)*1000;
-    store.timer={durationMs:duration,endAt:Date.now()+duration,remainingMs:duration,paused:false,label}; saveStore(); renderTimer();
+    store.timer={durationMs:duration,endAt:Date.now()+duration,remainingMs:duration,paused:false,label,startedAt:Date.now()}; saveStore(); renderTimer();
   }
   function pauseTimer() { if(!store.timer || store.timer.paused)return; store.timer.remainingMs=remainingMs(store.timer); store.timer.paused=true; store.timer.endAt=null; saveStore(); renderTimer(); }
   function resumeTimer() { if(!store.timer || !store.timer.paused || store.timer.remainingMs<=0)return; store.timer.paused=false; store.timer.endAt=Date.now()+store.timer.remainingMs; saveStore(); renderTimer(); }
@@ -500,8 +537,33 @@
     $('#timerValue').textContent=formatRemaining(left);
     if(left<=0) {
       store.timer.remainingMs=0; store.timer.endAt=null; store.timer.paused=true; saveStore(); renderTimer();
-      try { if('vibrate' in navigator) navigator.vibrate([100,60,100]); } catch(_) {}
+      alertTimerFinished();
       return;
+    }
+  }
+  function alertTimerFinished() {
+    const timer=store.timer;
+    if(!timer || lastTimerAlertId===timer.startedAt) return;
+    lastTimerAlertId=timer.startedAt;
+    try { if('vibrate' in navigator) navigator.vibrate([220,100,220,100,350]); } catch(_) {}
+    const title='Rest finished';
+    const body=`${timer.label || 'Your rest timer'} is complete. Time for your next set.`;
+    if('Notification' in window && Notification.permission==='granted') {
+      if(serviceWorkerRegistration?.showNotification) serviceWorkerRegistration.showNotification(title,{body,icon:'./icon-192.png',badge:'./icon-192.png',tag:'GWT-rest',renotify:true,data:{url:'./'}}).catch(()=>{});
+      else { try { new Notification(title,{body,icon:'./icon-192.png'}); } catch(_) {} }
+    }
+    if(document.visibilityState==='visible') showToast('Rest complete — get ready for your next set');
+  }
+  async function enableNotifications() {
+    if(!('Notification' in window)) { showToast('Notifications are not supported in this browser'); return; }
+    try {
+      const permission=await Notification.requestPermission();
+      showToast(permission==='granted'?'Rest alerts enabled':permission==='denied'?'Notifications blocked in browser settings':'Notification permission not granted');
+    } catch(_) { showToast('Could not enable notifications'); }
+  }
+  function checkExpiredTimerOnReturn() {
+    if(store.timer && !store.timer.paused && remainingMs(store.timer)<=0) {
+      store.timer.remainingMs=0; store.timer.endAt=null; store.timer.paused=true; saveStore(); renderTimer(); alertTimerFinished();
     }
   }
   function showToast(message) {
@@ -556,7 +618,7 @@
       }));
     });
     const csv=lines.map(row=>row.map(value=>`"${String(value??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
-    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`GymWorkoutTracker-workouts-${dateKey()}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast('CSV export created');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`GWT-workouts-${dateKey()}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast('CSV export created');
   }
   document.addEventListener('click', event => {
     const tabButton=event.target.closest('[data-tab]');
@@ -571,6 +633,7 @@
     else if(action==='timer-resume') resumeTimer();
     else if(action==='timer-reset') resetTimer();
     else if(action==='timer-dismiss') { store.timer=null; saveStore(); renderTimer(); }
+    else if(action==='enable-notifications') enableNotifications();
     else if(action==='export-csv') exportCsv();
   });
   document.addEventListener('input', event=>{const el=event.target.closest('[data-action="set-field"]');if(el)updateSetField(el);});
@@ -582,9 +645,11 @@
   window.addEventListener('online',()=>{$('#connectionLabel').textContent='Saved on device';});
   window.addEventListener('offline',()=>{$('#connectionLabel').textContent='Offline · local save';});
   if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').then(reg=>{serviceWorkerRegistration=reg;}).catch(()=>{}));
   }
   if(store.timer && !store.timer.paused && remainingMs(store.timer)<=0) { store.timer.remainingMs=0; store.timer.endAt=null; store.timer.paused=true; saveStore(); }
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkExpiredTimerOnReturn();});
+  window.addEventListener('pageshow',checkExpiredTimerOnReturn);
   render(); timerInterval=setInterval(tickTimer,1000);
 })();
 </script>

@@ -1,15 +1,14 @@
 {
   "name": "Gym Workout Tracker",
   "short_name": "GWT",
-  "description": "Track workouts, per-set weights and reps, rest timers, and weekly progress.",
-  "start_url": "./index.html",
+  "description": "Offline workout tracking and rest timer",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
   "background_color": "#f4f6f2",
   "theme_color": "#17231e",
   "icons": [
-    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png"}
   ]
 }

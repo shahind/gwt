@@ -239,7 +239,7 @@
   const DAYS = ['Sunday', 'Monday(8-9)', 'Tuesday(8-9)', 'Wednesday(8-9)', 'Thursday(8-9)', 'Friday(8-9)', 'Saturday(6-7)'];
   const WORKOUTS = [
     {
-      id: 'upper-a', day: 1, dayName: 'Monday', title: 'Upper A', subtitle: 'Chest · Side · Arm',
+      id: 'upper-a', day: 1, dayName: 'Monday', title: 'Upper A', subtitle: 'Chest · Shoulder · Triceps',
       exercises: [
         { id:'chest-press', priority:'primary', name:'Chest Press Machine', sets:3, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
         { id:'incline-press', priority:'primary', name:'MTS Incline Press Machine', sets:3, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
@@ -251,20 +251,19 @@
       ]
     },
     {
-      id: 'upper-b', day: 2, dayName: 'Tuesday', title: 'Upper B', subtitle: 'Back · Lats',
+      id: 'upper-b', day: 2, dayName: 'Tuesday', title: 'Upper B', subtitle: 'Back · Lats · Biceps',
       exercises: [
         { id:'lat-pulldown', priority:'compound', name:'Lat Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
         { id:'mts-row', priority:'compound', name:'MTS Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
         { id:'reverse-fly', priority:'isolation', name:'Reverse Pec Fly Machine', sets:3, min:13, max:15, target:'Rear delts and upper back', tag:'Rear delts', rest:120 },
         { id:'shrug', priority:'isolation', name:'Dumbbell Shrug', sets:3, min:13, max:15, target:'Upper trapezius', tag:'Traps', rest:120 },
         { id:'biceps-curl', priority:'isolation', name:'Biceps Curl Machine', sets:3, min:13, max:15, target:'Biceps', tag:'Biceps', rest:120 },
-        { id:'torso-rotation-left', priority:'small', name:'Torso Rotation Machine — Left', sets:3, min:13, max:15, target:'Obliques and trunk rotators (left direction)', tag:'Core', rest:120 },
-        { id:'torso-rotation-right', priority:'small', name:'Torso Rotation Machine — Right', sets:3, min:13, max:15, target:'Obliques and trunk rotators (right direction)', tag:'Core', rest:120 },
+        { id:'torso-rotation', priority:'small', name:'Torso Rotation Machine', sets:3, min:13, max:15, target:'Obliques and trunk rotators', tag:'Core', rest:180 },
         { id:'ab-crunch', priority:'small', name:'Abdominal Crunch Machine 1', sets:3, min:13, max:15, target:'Rectus abdominis (front abs)', tag:'Abs', rest:120 }
       ]
     },
     {
-      id: 'upper-c', day: 3, dayName: 'Wednesday', title: 'Upper C', subtitle: 'Chest · Side · Shoulder',
+      id: 'upper-c', day: 3, dayName: 'Wednesday', title: 'Upper C', subtitle: 'Chest · Shoulder · Triceps',
       exercises: [
         { id:'chest-press', priority:'primary', name:'Chest Press Machine', sets:3, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
         { id:'incline-press', priority:'primary', name:'MTS Incline Press Machine', sets:3, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
@@ -275,20 +274,19 @@
       ]
     },
     {
-      id: 'upper-d', day: 4, dayName: 'Thursday', title: 'Upper D', subtitle: 'Back · Lats',
+      id: 'upper-d', day: 4, dayName: 'Thursday', title: 'Upper D', subtitle: 'Back · Lats · Biceps',
       exercises: [
         { id:'seated-row', priority:'compound', name:'Seated Row Machine', sets:3, min:10, max:12, target:'Mid-back, rhomboids, lats, biceps', tag:'Back', rest:180, compound:true },
         { id:'front-pulldown', priority:'compound', name:'MTS Front Pull Down Machine', sets:3, min:10, max:12, target:'Lats, upper back, biceps', tag:'Lats', rest:180, compound:true },
         { id:'reverse-fly', priority:'isolation', name:'Reverse Pec Fly Machine', sets:3, min:13, max:15, target:'Rear delts and upper back', tag:'Rear delts', rest:120 },
         { id:'hammer-curl', priority:'isolation', name:'Seated Dumbbell Hammer Curl', sets:3, min:13, max:15, target:'Brachialis, brachioradialis and biceps', tag:'Biceps', rest:120 },
         { id:'shrug', priority:'isolation', name:'Dumbbell Shrug', sets:3, min:13, max:15, target:'Upper trapezius', tag:'Traps', rest:120 },
-        { id:'torso-rotation-left', priority:'small', name:'Torso Rotation Machine — Left', sets:3, min:13, max:15, target:'Obliques and trunk rotators (left direction)', tag:'Core', rest:120 },
-        { id:'torso-rotation-right', priority:'small', name:'Torso Rotation Machine — Right', sets:3, min:13, max:15, target:'Obliques and trunk rotators (right direction)', tag:'Core', rest:120 },
+        { id:'torso-rotation', priority:'small', name:'Torso Rotation Machine', sets:3, min:13, max:15, target:'Obliques and trunk rotators', tag:'Core', rest:180 },
         { id:'ab-crunch', priority:'small', name:'Abdominal Crunch Machine 2', sets:3, min:13, max:15, target:'Rectus abdominis (front abs)', tag:'Abs', rest:120 }
       ]
     },
     {
-      id: 'upper-e', day: 5, dayName: 'Friday', title: 'Upper E', subtitle: 'Chest · Side · Shoulder',
+      id: 'upper-e', day: 5, dayName: 'Friday', title: 'Upper E', subtitle: 'Chest · Shoulder · Triceps',
       exercises: [
         { id:'chest-press', priority:'primary', name:'Chest Press Machine', sets:3, min:10, max:12, target:'Chest (pectorals), front delts, triceps', tag:'Chest', rest:180, compound:true },
         { id:'incline-press', priority:'primary', name:'MTS Incline Press Machine', sets:3, min:10, max:12, target:'Upper chest, front delts, triceps', tag:'Upper chest', rest:180, compound:true },
@@ -299,14 +297,13 @@
       ]
     },
     {
-      id: 'legs', day: 6, dayName: 'Saturday', title: 'Legs', subtitle: 'Quads · Hamstrings · Glutes · Calves · Side',
+      id: 'legs', day: 6, dayName: 'Saturday', title: 'Legs', subtitle: 'Lower Body  · Sides',
       exercises: [
         { id:'leg-press', priority:'primary', name:'Leg Press Machine', sets:4, min:10, max:12, target:'Quadriceps, glutes, adductors', tag:'Quads + glutes', rest:180, compound:true },
         { id:'glute-drive', priority:'compound', name:'Hip-Thrust / Glute-Drive Machine', sets:3, min:10, max:12, target:'Gluteus maximus, hamstrings', tag:'Glutes', rest:180, compound:true },
         { id:'seated-leg-curl', priority:'isolation', name:'Seated Leg Curl Machine', sets:4, min:13, max:15, target:'Hamstrings', tag:'Hamstrings', rest:120 },
         { id:'leg-extension', priority:'isolation', name:'Leg Extension Machine', sets:3, min:13, max:15, target:'Quadriceps', tag:'Quads', rest:120 },
-        { id:'torso-rotation-left', priority:'small', name:'Torso Rotation Machine — Left', sets:3, min:13, max:15, target:'Obliques and trunk rotators (left direction)', tag:'Core', rest:120 },
-        { id:'torso-rotation-right', priority:'small', name:'Torso Rotation Machine — Right', sets:3, min:13, max:15, target:'Obliques and trunk rotators (right direction)', tag:'Core', rest:120 },
+        { id:'torso-rotation', priority:'small', name:'Torso Rotation Machine', sets:3, min:13, max:15, target:'Obliques and trunk rotators', tag:'Core', rest:180 },
         { id:'calf-extension', priority:'small', name:'Calf Extension Machine', sets:4, min:13, max:15, target:'Gastrocnemius and soleus (calves)', tag:'Calves', rest:120 },
         { id:'back-extension', priority:'small', name:'Back Extension Machine', sets:2, min:18, max:20, target:'Spinal erectors, glutes, hamstrings', tag:'Posterior chain', rest:120 },
       ]

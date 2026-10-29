@@ -104,6 +104,14 @@
     .exercise-footer { display: flex; justify-content: flex-end; padding-top: 8px; }
     .small-action { border: 0; background: transparent; padding: 3px 0; color: var(--green); font-size: 10px; font-weight: 800; }
     .note { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 10px 2px 0; }
+    .machine-note { margin-top: 8px; padding-top: 9px; border-top: 1px dashed #dfe6de; }
+    .machine-note label { display: block; margin: 0 0 5px; color: #829087; text-transform: uppercase; letter-spacing: .07em; font-size: 9px; font-weight: 850; }
+    .machine-note textarea { display: block; width: 100%; min-height: 44px; max-height: 160px; resize: vertical; field-sizing: content; background: #fbfcfa; color: var(--ink); border: 1px solid #dfe6de; border-radius: 8px; padding: 7px 9px; font: inherit; font-size: 16px; line-height: 1.4; }
+    .machine-note textarea::placeholder { color: #a0aaa2; font-size: 12px; }
+    .switch-row { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 700; line-height: 1.35; }
+    .switch-row input { width: 20px; height: 20px; flex: 0 0 20px; accent-color: var(--green); }
+    .pref-status { color: var(--muted); font-size: 10px; margin: 0; }
+    .entry-date small { color: var(--muted); font-weight: 650; font-size: 10px; }
     .rest-day { text-align: center; background: var(--paper); border: 1px solid var(--line); border-radius: 22px; padding: 30px 21px; }
     .rest-icon { width: 57px; height: 57px; display: grid; place-items: center; border-radius: 19px; color: var(--green); background: var(--green-soft); margin: 0 auto 15px; }
     .rest-icon svg { width: 28px; height: 28px; }
@@ -169,6 +177,11 @@
     .history-exercise strong { text-align: right; }
     .timer-dock { position: fixed; z-index: 20; bottom: calc(77px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); width: min(calc(100% - 24px), 520px); background: #17231e; color: white; border-radius: 15px; padding: 11px 12px; box-shadow: 0 14px 34px rgba(11,24,16,.25); display: flex; align-items: center; gap: 10px; }
     .timer-dock[hidden] { display: none; }
+    .timer-dock.is-finished { background: var(--lime); color: var(--ink); animation: dock-pulse 1s ease-in-out infinite; }
+    .timer-dock.is-finished .timer-label { color: #44541a; }
+    .timer-dock.is-finished .timer-icon { color: var(--ink); background: rgba(23,35,30,.1); }
+    .timer-dock.is-finished .timer-controls .timer-dismiss { background: var(--ink); color: var(--lime); border-color: var(--ink); }
+    @keyframes dock-pulse { 0%, 100% { box-shadow: 0 14px 34px rgba(11,24,16,.25), 0 0 0 0 rgba(217,240,120,.0); } 50% { box-shadow: 0 14px 34px rgba(11,24,16,.25), 0 0 0 7px rgba(217,240,120,.55); } }
     .timer-icon { width: 34px; height: 34px; display: grid; place-items: center; flex: 0 0 34px; border-radius: 11px; color: var(--lime); background: rgba(217,240,120,.12); }
     .timer-icon svg { width: 18px; height: 18px; }
     .timer-main { min-width: 0; flex: 1; }
@@ -236,7 +249,6 @@
   const BACKUP_KEY = 'gwt.pwa.backup.v1';
   const PREVIOUS_KEY = 'gwt.pwa.previous.v1';
   let recoveredLocalBackup = false;
-  const DAYS = ['Sunday', 'Monday(8-9)', 'Tuesday(8-9)', 'Wednesday(8-9)', 'Thursday(8-9)', 'Friday(8-9)', 'Saturday(6-7)'];
   const WORKOUTS = [
     {
       id: 'upper-a', day: 1, dayName: 'Monday', title: 'Upper A', subtitle: 'Chest · Shoulder · Triceps',
@@ -259,7 +271,7 @@
         { id:'shrug', priority:'isolation', name:'Dumbbell Shrug', sets:3, min:13, max:15, target:'Upper trapezius', tag:'Traps', rest:120 },
         { id:'biceps-curl', priority:'isolation', name:'Biceps Curl Machine', sets:3, min:13, max:15, target:'Biceps', tag:'Biceps', rest:120 },
         { id:'torso-rotation', priority:'small', name:'Torso Rotation Machine', sets:3, min:13, max:15, target:'Obliques and trunk rotators', tag:'Core', rest:180 },
-        { id:'ab-crunch', priority:'small', name:'Abdominal Crunch Machine 1', sets:3, min:13, max:15, target:'Rectus abdominis (front abs)', tag:'Abs', rest:120 }
+        { id:'ab-crunch-1', priority:'small', name:'Abdominal Crunch Machine 1', sets:3, min:13, max:15, target:'Rectus abdominis (front abs)', tag:'Abs', rest:120 }
       ]
     },
     {
@@ -282,7 +294,7 @@
         { id:'hammer-curl', priority:'isolation', name:'Seated Dumbbell Hammer Curl', sets:3, min:13, max:15, target:'Brachialis, brachioradialis and biceps', tag:'Biceps', rest:120 },
         { id:'shrug', priority:'isolation', name:'Dumbbell Shrug', sets:3, min:13, max:15, target:'Upper trapezius', tag:'Traps', rest:120 },
         { id:'torso-rotation', priority:'small', name:'Torso Rotation Machine', sets:3, min:13, max:15, target:'Obliques and trunk rotators', tag:'Core', rest:180 },
-        { id:'ab-crunch', priority:'small', name:'Abdominal Crunch Machine 2', sets:3, min:13, max:15, target:'Rectus abdominis (front abs)', tag:'Abs', rest:120 }
+        { id:'ab-crunch-2', priority:'small', name:'Abdominal Crunch Machine 2', sets:3, min:13, max:15, target:'Rectus abdominis (front abs)', tag:'Abs', rest:120 }
       ]
     },
     {
@@ -314,26 +326,53 @@
   const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
   let activeTab = 'today';
   let selectedProgress = '';
-  let timerInterval = null;
+  let tickHandle = null;
   let serviceWorkerRegistration = null;
-  let lastTimerAlertId = null;
+  let lastAlertRun = null;
   let toastTimeout = null;
+  let saveTimer = null;
+  let lastSerialized = '';
+  let lastSnapshotAt = 0;
+  const SNAPSHOT_EVERY_MS = 5 * 60 * 1000;
+  // Exercises that used to share an id but are different machines get their own id (and their history moves with them).
+  const ID_MIGRATIONS = { 'upper-b': { 'ab-crunch': 'ab-crunch-1' }, 'upper-d': { 'ab-crunch': 'ab-crunch-2' } };
   let store = loadStore();
 
+  function migrateStore(s) {
+    Object.values(s.sessions).forEach(sess => {
+      const map = ID_MIGRATIONS[sess?.workoutId];
+      if (!map || !sess.sets) return;
+      Object.entries(map).forEach(([from, to]) => {
+        // Move old data over unless the new id already holds real entries (an empty placeholder is overwritten).
+        if (sess.sets[from] && (!sess.sets[to] || !sess.sets[to].some(isSetLogged))) { sess.sets[to] = sess.sets[from]; delete sess.sets[from]; }
+      });
+    });
+    return s;
+  }
   function parsedStore(raw) {
     try {
       const value = JSON.parse(raw || 'null');
       if (!value || typeof value !== 'object' || !value.sessions || typeof value.sessions !== 'object') return null;
-      return { sessions: value.sessions, timer: value.timer || null, unit: value.unit || 'lb' };
+      return migrateStore({
+        sessions: value.sessions,
+        timer: value.timer || null,
+        unit: value.unit || 'lb',
+        notes: value.notes && typeof value.notes === 'object' ? value.notes : {},
+        prefs: { lockAudio: true, ...(value.prefs && typeof value.prefs === 'object' ? value.prefs : {}) }
+      });
     } catch (_) { return null; }
   }
-  function sessionCount(candidate) { return candidate ? Object.keys(candidate.sessions || {}).length : 0; }
+  // Only sessions with real data count, so empty placeholder days never outrank a real snapshot.
+  function sessionCount(candidate) {
+    return candidate ? Object.values(candidate.sessions || {}).filter(s => Object.values(s?.sets || {}).some(arr => Array.isArray(arr) && arr.some(isSetLogged))).length : 0;
+  }
   function loadStore() {
     // Try the live store first, then rolling local snapshots. Never initialize blank data
     // over a valid snapshot just because the primary key is missing or malformed.
-    let main = null, backup = null, previous = null;
+    let main = null, backup = null, previous = null, raw = '';
     try {
-      main = parsedStore(localStorage.getItem(STORAGE_KEY));
+      raw = localStorage.getItem(STORAGE_KEY) || '';
+      main = parsedStore(raw);
       backup = parsedStore(localStorage.getItem(BACKUP_KEY));
       previous = parsedStore(localStorage.getItem(PREVIOUS_KEY));
     } catch (_) {}
@@ -342,22 +381,30 @@
     const best = candidates[0];
     if (best) {
       recoveredLocalBackup = best !== main;
+      lastSerialized = best === main ? raw : '';
       return best;
     }
-    return { sessions: {}, timer: null, unit: 'lb' };
+    return { sessions: {}, timer: null, unit: 'lb', notes: {}, prefs: { lockAudio: true } };
   }
   function saveStore() {
+    clearTimeout(saveTimer); saveTimer = null;
     try {
       const serialized = JSON.stringify(store);
-      const oldMain = parsedStore(localStorage.getItem(STORAGE_KEY));
-      // Keep one prior snapshot when it contains records. A normal update should never clear it.
-      if (oldMain && sessionCount(oldMain) > 0) localStorage.setItem(PREVIOUS_KEY, JSON.stringify(oldMain));
+      // Rolling "previous" snapshot: refreshed at most every few minutes from the in-memory copy
+      // (no re-parsing of localStorage on every save).
+      if (lastSerialized && Date.now() - lastSnapshotAt > SNAPSHOT_EVERY_MS && sessionCount(JSON.parse(lastSerialized)) > 0) {
+        localStorage.setItem(PREVIOUS_KEY, lastSerialized); lastSnapshotAt = Date.now();
+      }
       localStorage.setItem(STORAGE_KEY, serialized);
       localStorage.setItem(BACKUP_KEY, serialized);
+      lastSerialized = serialized;
       $('#connectionLabel').textContent = recoveredLocalBackup ? 'Recovered local backup' : 'Saved on device';
       recoveredLocalBackup = false;
     } catch (_) { $('#connectionLabel').textContent = 'Save unavailable · export a backup'; }
   }
+  // Typing saves are debounced; everything else saves immediately.
+  function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveStore, 400); }
+  function flushSave() { if (saveTimer) saveStore(); }
   function dateKey(date = new Date()) {
     const y = date.getFullYear(); const m = String(date.getMonth()+1).padStart(2,'0'); const d = String(date.getDate()).padStart(2,'0');
     return `${y}-${m}-${d}`;
@@ -377,7 +424,8 @@
   }
   function getSession(date, workout, create=true) {
     const key = sessionKey(date, workout.id);
-    if (!store.sessions[key] && create) { store.sessions[key] = makeBlankSession(date, workout); saveStore(); }
+    // Created in memory only; it is written to disk with the first real edit.
+    if (!store.sessions[key] && create) store.sessions[key] = makeBlankSession(date, workout);
     return store.sessions[key] || null;
   }
   function allSetCount(workout) { return workout.exercises.reduce((sum, ex) => sum + ex.sets, 0); }
@@ -410,9 +458,18 @@
   function esc(value) { return String(value ?? '').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function formatWeight(value) { return value === '' || value == null ? '—' : `${value} ${store.unit}`; }
   function validNum(value) { return value !== '' && Number.isFinite(Number(value)); }
-  function getLastSessionForExercise(workoutId, exerciseId, beforeDate) {
-    const matches=Object.values(store.sessions).filter(s=>s.workoutId===workoutId && s.date<beforeDate && s.sets?.[exerciseId] && s.sets[exerciseId].some(set=>set.weight!=='' || set.reps!=='' || set.done)).sort((a,b)=>b.date.localeCompare(a.date));
-    return matches[0] || null;
+  const hasNumbers = set => !!(set && (set.done || set.weight !== '' || set.reps !== ''));
+  // One pass over past sessions: for every exercise id, the most recent earlier session that logged it,
+  // regardless of which weekday/workout it was done in.
+  function latestByExercise(beforeDate) {
+    const latest = new Map();
+    Object.values(store.sessions)
+      .filter(s => s?.date && s.date < beforeDate)
+      .sort((a,b) => a.date.localeCompare(b.date))
+      .forEach(s => Object.entries(s.sets || {}).forEach(([id, sets]) => {
+        if (Array.isArray(sets) && sets.some(hasNumbers)) latest.set(id, { session:s, sets });
+      }));
+    return latest;
   }
   function setSummary(sets) {
     const valid=sets.filter(s=>s.weight!=='' || s.reps!=='');
@@ -422,22 +479,9 @@
     const reps=valid.filter(s=>s.reps!=='').map(s=>s.reps).join('/');
     return `${weight} · reps ${reps || '—'}`;
   }
-  function previousHint(workout, ex, date) {
-    const prev=getLastSessionForExercise(workout.id,ex.id,date);
-    if(!prev) return 'First log for this exercise in this session';
-    const sets=prev.sets[ex.id] || [];
-    const detail=setSummary(sets);
-    return `Last (${formatDate(prev.date,{month:'short',day:'numeric'})}): ${detail}`;
-  }
-  function lastWeekSets(workout, ex, date) {
-    const previousDate=dateKey(addDays(parseDate(date),-7));
-    const session=store.sessions[sessionKey(previousDate,workout.id)];
-    return session?.sets?.[ex.id] || [];
-  }
-  function currentSessionInfo() {
-    const workout=getTodayWorkout();
-    if(!workout) return {workout:null,session:null};
-    return {workout,session:getSession(dateKey(),workout)};
+  function previousHint(prev) {
+    if(!prev) return 'First log for this machine';
+    return `Last (${formatDate(prev.session.date)}): ${setSummary(prev.sets)}`;
   }
   function iconClock() { return '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 9v4l2.5 1.5M9 2h6M12 2v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'; }
   function renderStat(label,value,foot) { return `<div class="stat-card"><div class="stat-label">${label}</div><div class="stat-value">${value}</div><div class="stat-foot">${foot}</div></div>`; }
@@ -449,10 +493,11 @@
     const p=progressFor(session,workout); const percent=p.total?Math.round(100*p.done/p.total):0;
     return `<section class="session-hero"><p class="hero-kicker">${esc(workout.dayName)} · ${esc(formatDate(date,{month:'short',day:'numeric'}))}</p><h2>${esc(workout.title)}</h2><p class="hero-sub">${esc(workout.subtitle)} · ${workout.exercises.length} exercises</p><div class="hero-progress-row"><span>Session progress</span><strong>${p.done}/${p.total} sets</strong></div><div class="progress-track"><div class="progress-fill" style="width:${percent}%"></div></div></section>`;
   }
-  function renderExerciseCard(workout,session,ex) {
+  function renderExerciseCard(workout,session,ex,latest) {
     const sets=session.sets[ex.id] || Array.from({length:ex.sets},()=>({weight:'',reps:'',rir:'',done:false}));
-    const p=previousHint(workout,ex,session.date);
-    const lastWeek=lastWeekSets(workout,ex,session.date);
+    const prev=latest.get(ex.id);
+    const p=previousHint(prev);
+    const lastWeek=prev?.sets || [];
     const targetLabel=ex.assistance?'Assistance (lower is harder)':`Weight (${store.unit})`;
     const rows=sets.map((set,i)=>`<div class="set-row ${set.done?'is-done':''}" data-exercise-row="${esc(ex.id)}">
       <input class="set-check" type="checkbox" aria-label="Mark set ${i+1} complete" data-action="toggle-set" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}" ${set.done?'checked':''}>
@@ -461,7 +506,7 @@
       <div class="field-wrap"><input class="set-input" aria-label="Set ${i+1} reps" type="number" inputmode="numeric" min="0" step="1" placeholder="${esc(lastWeek[i]?.reps ? `↳ ${lastWeek[i].reps}` : `${ex.min}–${ex.max}`)}" value="${esc(set.reps)}" data-action="set-field" data-field="reps" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}"></div>
       <div class="field-wrap"><select class="rir-select" aria-label="Set ${i+1} reps in reserve" data-action="set-field" data-field="rir" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}" data-index="${i}"><option value="" ${set.rir===''?'selected':''}>RIR —</option>${[0,1,2,3,4,5].map(v=>`<option value="${v}" ${String(set.rir)===String(v)?'selected':''}>${v===5?'5+':v}</option>`).join('')}</select></div>
     </div>`).join('');
-    return `<article class="exercise-card" id="exercise-${esc(ex.id)}"><div class="exercise-top"><div class="exercise-title-wrap"><h3>${esc(ex.name)}</h3><p class="target-muscle">Target: ${esc(ex.target)}</p></div><span class="muscle-pill">${esc(ex.tag)}</span></div><div class="prescription-row"><div class="prescription">${ex.sets} sets · ${ex.min}–${ex.max} reps</div><button class="rest-button" data-action="start-rest" data-seconds="${ex.rest}" data-label="${esc(ex.name)}">${iconClock()} Rest ${Math.floor(ex.rest/60)}:00</button></div><p class="last-performance">${esc(p)}</p><div class="sets-header"><span>Done</span><span>Set</span><span>${esc(targetLabel)}</span><span>Reps</span><span>RIR</span></div>${rows}<div class="exercise-footer"><button class="small-action" data-action="clear-exercise" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}">Clear this exercise</button></div></article>`;
+    return `<article class="exercise-card" id="exercise-${esc(ex.id)}"><div class="exercise-top"><div class="exercise-title-wrap"><h3>${esc(ex.name)}</h3><p class="target-muscle">Target: ${esc(ex.target)}</p></div><span class="muscle-pill">${esc(ex.tag)}</span></div><div class="prescription-row"><div class="prescription">${ex.sets} sets · ${ex.min}–${ex.max} reps</div><button class="rest-button" data-action="start-rest" data-seconds="${ex.rest}" data-label="${esc(ex.name)}">${iconClock()} Rest ${Math.floor(ex.rest/60)}:00</button></div><p class="last-performance">${esc(p)}</p><div class="sets-header"><span>Done</span><span>Set</span><span>${esc(targetLabel)}</span><span>Reps</span><span>RIR</span></div>${rows}<div class="exercise-footer"><button class="small-action" data-action="clear-exercise" data-workout="${esc(workout.id)}" data-date="${session.date}" data-exercise="${esc(ex.id)}">Clear this exercise</button></div><div class="machine-note"><label for="note-${esc(ex.id)}">Machine settings</label><textarea id="note-${esc(ex.id)}" rows="2" maxlength="600" placeholder="Seat height, grip width, pin position…" data-action="note-field" data-exercise="${esc(ex.id)}">${esc(store.notes[ex.id] || '')}</textarea></div></article>`;
   }
   const PRIORITY_GROUPS = [
     { id:'primary', title:'Green · Priority compounds', hint:'Do first · swap within this group', className:'priority-primary' },
@@ -470,10 +515,11 @@
     { id:'small', title:'Red · Smaller muscles & core', hint:'Finish here · swap within group', className:'priority-small' }
   ];
   function renderGroupedExercises(workout, session) {
+    const latest = latestByExercise(session.date);
     return PRIORITY_GROUPS.map(group => {
       const exercises = workout.exercises.filter(ex => (ex.priority || 'isolation') === group.id);
       if (!exercises.length) return '';
-      return `<section class="priority-group ${group.className}"><div class="priority-group-head"><strong>${group.title}</strong><span>${exercises.length} exercises</span></div><div class="exercise-list-inner">${exercises.map(ex=>renderExerciseCard(workout,session,ex)).join('')}</div></section>`;
+      return `<section class="priority-group ${group.className}"><div class="priority-group-head"><strong>${group.title}</strong><span>${exercises.length} exercises</span></div><div class="exercise-list-inner">${exercises.map(ex=>renderExerciseCard(workout,session,ex,latest)).join('')}</div></section>`;
     }).join('');
   }
   function renderToday() {
@@ -485,20 +531,24 @@
       return html;
     }
     const session=getSession(date,workout);
-    html+=`<div class="section-heading"><div><h2>Your session</h2><p>Log every working set as you go.</p></div><span style="color:var(--muted);font-size:10px;font-weight:800">${allSetCount(workout)} SETS</span></div>${renderSessionHero(workout,session,date)}<div class="section-heading"><div><h2>Exercises</h2><p>Work through each color group before the next. You can change the order within a group if machines are busy.</p></div></div><div class="exercise-list">${renderGroupedExercises(workout,session)}</div><p class="note">Progression rule: when every set reaches the top of its rep range with consistent technique and about 2 RIR, try the smallest useful weight increase next time. For assisted pull-ups, progress by reducing assistance.</p><div style="display:flex;justify-content:center;margin-top:16px"><button class="secondary-button" data-action="export-csv">Export workout log (CSV)</button></div>`;
+    html+=`<div class="section-heading"><div><h2>Your session</h2><p>Log every working set as you go.</p></div><span style="color:var(--muted);font-size:10px;font-weight:800">${allSetCount(workout)} SETS</span></div>${renderSessionHero(workout,session,date)}<div class="section-heading"><div><h2>Exercises</h2><p>Work through each color group before the next. You can change the order within a group if machines are busy.</p></div></div><div class="exercise-list">${renderGroupedExercises(workout,session)}</div><p class="note">Progression rule: when every set reaches the top of its rep range with consistent technique and about 2 RIR, try the smallest useful weight increase next time.</p><div style="display:flex;justify-content:center;margin-top:16px"><button class="secondary-button" data-action="export-csv">Export workout log (CSV)</button></div>`;
     return html;
   }
   function renderPlan() {
     const todayW=getTodayWorkout();
-    return `<div class="section-heading" style="margin-top:0"><div><h2>Your weekly plan</h2><p>Four training days · saved as your default split</p></div></div><p class="section-intro">Exercises are grouped by priority: green = priority compounds, yellow = other compounds, orange = isolation, red = smaller muscles/core. You can swap exercises within a color group when equipment is busy, but finish the group before moving to the next color. Rest: 3 minutes for compounds, 2 minutes for isolation/core.</p><div class="plan-groups">${WORKOUTS.map(w=>`<details class="plan-group" ${todayW?.id===w.id?'open':''}><summary><div><div class="plan-day">${esc(w.dayName)}</div><strong>${esc(w.title)}</strong><small>${w.exercises.length} exercises · ${allSetCount(w)} sets</small></div><svg class="summary-chevron" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="plan-table">${PRIORITY_GROUPS.map(g=>{const es=w.exercises.filter(ex=>(ex.priority||'isolation')===g.id);return es.length?`<div class="plan-priority-label">${g.title}</div>${es.map(ex=>`<div class="plan-line"><div><strong>${esc(ex.name)}</strong><small>${esc(ex.target)} · rest ${Math.floor(ex.rest/60)} min</small></div><div class="plan-dose">${ex.sets} × ${ex.min}–${ex.max}</div></div>`).join('')}`:''}).join('')}</div></details>`).join('')}</div><p class="note">For side bends and torso rotations, left and right are tracked separately so each side gets its prescribed sets.</p>`;
+    return `<div class="section-heading" style="margin-top:0"><div><h2>Your weekly plan</h2><p>${WORKOUTS.length} training days · saved as your default split</p></div></div><p class="section-intro">Exercises are grouped by priority: green = priority compounds, yellow = other compounds, orange = isolation, red = smaller muscles/core. You can swap exercises within a color group when equipment is busy, but finish the group before moving to the next color. Rest: 3 minutes for compounds, 2 minutes for isolation/core.</p><div class="plan-groups">${WORKOUTS.map(w=>`<details class="plan-group" ${todayW?.id===w.id?'open':''}><summary><div><div class="plan-day">${esc(w.dayName)}</div><strong>${esc(w.title)}</strong><small>${w.exercises.length} exercises · ${allSetCount(w)} sets</small></div><svg class="summary-chevron" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="plan-table">${PRIORITY_GROUPS.map(g=>{const es=w.exercises.filter(ex=>(ex.priority||'isolation')===g.id);return es.length?`<div class="plan-priority-label">${g.title}</div>${es.map(ex=>`<div class="plan-line"><div><strong>${esc(ex.name)}</strong><small>${esc(ex.target)} · rest ${Math.floor(ex.rest/60)} min</small></div><div class="plan-dose">${ex.sets} × ${ex.min}–${ex.max}</div></div>`).join('')}`:''}).join('')}</div></details>`).join('')}</div>`;
   }
+  // One entry per machine/exercise id, however many weekdays it appears on.
   function progressOptions() {
-    const values=[];
-    WORKOUTS.forEach(w=>w.exercises.forEach(ex=>values.push({value:`${w.id}::${ex.id}`,label:`${w.title} · ${ex.name}`,workout:w,ex})))
-    return values;
+    const byId=new Map();
+    WORKOUTS.forEach(w=>w.exercises.forEach(ex=>{
+      if(!byId.has(ex.id)) byId.set(ex.id,{value:ex.id,ex,days:[]});
+      byId.get(ex.id).days.push(w.dayName.slice(0,3));
+    }));
+    return [...byId.values()].map(o=>({...o,label:`${o.ex.name} · ${o.days.join('/')}`}));
   }
-  function historyForExercise(workoutId,exerciseId) {
-    return Object.values(store.sessions).filter(s=>s.workoutId===workoutId && s.sets?.[exerciseId] && s.sets[exerciseId].some(set=>set.weight!=='' || set.reps!=='' || set.done)).sort((a,b)=>a.date.localeCompare(b.date)).map(session=>({session,sets:session.sets[exerciseId]}));
+  function historyForExercise(exerciseId) {
+    return Object.values(store.sessions).filter(s=>s.sets?.[exerciseId] && s.sets[exerciseId].some(hasNumbers)).sort((a,b)=>a.date.localeCompare(b.date)).map(session=>({session,sets:session.sets[exerciseId]}));
   }
   function topWeight(sets, lowerIsBetter=false) {
     const weights=sets.filter(s=>s.weight!=='' && Number.isFinite(Number(s.weight))).map(s=>Number(s.weight));
@@ -511,7 +561,7 @@
     return actual;
   }
   function renderTrend(entries, assistance=false) {
-    const valid=entries.map((e)=>({date:e.session.date,weight:topWeight(e.sets,assistance)})).filter(e=>e.weight!==null).slice(-8);
+    const valid=entries.map((e)=>({date:e.session.date,weight:topWeight(e.sets,assistance)})).filter(e=>e.weight!==null).slice(-12);
     if(valid.length<2) return `<div class="empty-state">Log this exercise in at least two sessions with a weight to see a trend chart. Your set-by-set entries are still saved below.</div>`;
     const width=320,height=145,padL=30,padR=14,padT=15,padB=29;
     const vals=valid.map(e=>e.weight); let min=Math.min(...vals),max=Math.max(...vals); if(min===max){min=Math.max(0,min-1);max=max+1;} const range=max-min;
@@ -524,25 +574,26 @@
     const options=progressOptions();
     if(!selectedProgress || !options.some(o=>o.value===selectedProgress)) selectedProgress=options[0]?.value || '';
     const selected=options.find(o=>o.value===selectedProgress);
-    const s=weekStats();
-    let html=`<div class="section-heading" style="margin-top:0"><div><h2>Progress</h2><p>Compare each exercise within the same workout.</p></div></div><div class="week-overview">${renderStat('WORKOUTS LOGGED',s.workouts,`${s.completed} completed`)}${renderStat('SETS CHECKED',s.done,`of ${s.total} planned`)}${renderStat('REPS RECORDED',s.reps,'this week')}</div><div class="section-heading"><div><h2>Exercise history</h2><p>Keep each day’s version separate.</p></div></div><section class="panel"><h3>Pick an exercise</h3><label class="select-label" for="progressSelect">Workout · exercise</label><select class="wide-select" id="progressSelect">${options.map(o=>`<option value="${esc(o.value)}" ${o.value===selectedProgress?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`;
+    let html=`<div class="section-heading" style="margin-top:0"><div><h2>Progress</h2><p>Each machine is tracked as one, across every day it appears.</p></div></div>${renderWeekOverview()}<div class="section-heading"><div><h2>Exercise history</h2><p>Pick a machine to see all its sessions.</p></div></div><section class="panel"><h3>Pick an exercise</h3><label class="select-label" for="progressSelect">Exercise · days</label><select class="wide-select" id="progressSelect">${options.map(o=>`<option value="${esc(o.value)}" ${o.value===selectedProgress?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`;
     if(selected) {
-      const entries=historyForExercise(selected.workout.id,selected.ex.id);
+      const entries=historyForExercise(selected.ex.id);
+      const machineNote=(store.notes[selected.ex.id]||'').trim();
       const last=entries[entries.length-1];
-      html+=`<div style="margin-top:16px"><div style="font-size:12px;font-weight:850">${esc(selected.ex.name)}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Target: ${esc(selected.ex.target)} · ${selected.ex.sets} sets × ${selected.ex.min}–${selected.ex.max} reps</div></div>`;
+      html+=`<div style="margin-top:16px"><div style="font-size:12px;font-weight:850">${esc(selected.ex.name)}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Target: ${esc(selected.ex.target)} · ${selected.ex.sets} sets × ${selected.ex.min}–${selected.ex.max} reps</div>${machineNote?`<div style="font-size:10px;color:var(--muted);margin-top:4px;white-space:pre-wrap">Machine settings: ${esc(machineNote)}</div>`:''}</div>`;
       if(last) {
         const best=topWeight(last.sets,!!selected.ex.assistance); const reps=totalReps(last.sets); const checked=last.sets.filter(x=>x.done).length;
         html+=`<div class="week-overview" style="margin-top:13px;grid-template-columns:repeat(3,minmax(0,1fr))">${renderStat('LATEST LOG',formatDate(last.session.date,{month:'short',day:'numeric'}),'last session')}${renderStat(selected.ex.assistance?'ASSISTANCE':'TOP WEIGHT',best===null?'—':best, best===null?'no weight logged':(selected.ex.assistance?'less is harder':store.unit))}${renderStat('TOTAL REPS',reps,`${checked}/${last.sets.length} sets checked`)}</div>`;
       }
       html+=`<div style="margin-top:15px">${entries.length?renderTrend(entries,!!selected.ex.assistance):'<div class="empty-state">No logged sets for this exercise yet. Start a workout and enter your actual weight and reps; your history will appear here automatically.</div>'}</div>`;
-      if(entries.length) html+=`<div class="entries">${entries.slice().reverse().map(({session,sets})=>`<div class="entry-row"><div><div class="entry-date">${esc(formatLongDate(session.date))}</div><div class="entry-detail">${esc(setDisplay(sets))}</div><div class="entry-detail">${sets.filter(s=>s.done).length}/${sets.length} sets checked${sets.some(s=>s.rir!=='')?' · RIR '+sets.filter(s=>s.rir!=='').map(s=>s.rir).join('/') : ''}</div></div><div class="entry-result">${topWeight(sets,!!selected.ex.assistance)===null?'—':`${topWeight(sets,!!selected.ex.assistance)} ${store.unit}`}<small>${totalReps(sets)} total reps</small></div></div>`).join('')}</div>`;
+      if(entries.length) html+=`<div class="entries">${entries.slice().reverse().map(({session,sets})=>`<div class="entry-row"><div><div class="entry-date">${esc(formatLongDate(session.date))}<small> · ${esc(workoutById(session.workoutId)?.title||'')}</small></div><div class="entry-detail">${esc(setDisplay(sets))}</div><div class="entry-detail">${sets.filter(s=>s.done).length}/${sets.length} sets checked${sets.some(s=>s.rir!=='')?' · RIR '+sets.filter(s=>s.rir!=='').map(s=>s.rir).join('/') : ''}</div></div><div class="entry-result">${topWeight(sets,!!selected.ex.assistance)===null?'—':`${topWeight(sets,!!selected.ex.assistance)} ${store.unit}`}<small>${totalReps(sets)} total reps</small></div></div>`).join('')}</div>`;
     }
-    html+=`</section><p class="note">A logged top weight is only one data point. Compare reps, RIR, technique, and machine settings too. For assisted pull-ups, reducing the assistance amount is progress.</p>`;
+    html+=`</section><p class="note">A logged top weight is only one data point. Compare reps, RIR, technique, and machine settings too.</p>`;
     return html;
   }
   function renderHistory() {
     const items=Object.values(store.sessions).filter(s=>{const w=workoutById(s.workoutId);return w&&hasAnyData(s,w)}).sort((a,b)=>b.date.localeCompare(a.date));
     let html=`<div class="section-heading" style="margin-top:0"><div><h2>Workout history</h2><p>Your completed and in-progress sessions.</p></div><button class="text-link" data-action="export-csv">Export CSV ↓</button></div>
+      <section class="backup-panel"><div><strong>Rest timer alerts</strong><p>Lock-screen timer plays a silent track while you rest, which keeps the app alive and shows a media control on your lock screen, then sounds an alarm when the rest ends. It will pause music from other apps during rests.</p></div><label class="switch-row"><input type="checkbox" data-action="pref-lock-audio" ${store.prefs.lockAudio?'checked':''}><span>Lock-screen timer (silent audio + alarm)</span></label><p class="pref-status">Notifications: ${esc(notificationState())}</p><div class="backup-actions"><button class="secondary-button" data-action="test-timer">Test (10 s rest)</button><button class="secondary-button" data-action="enable-notifications">Enable notifications</button></div></section>
       <section class="backup-panel"><div><strong>Backup & restore</strong><p>Save a JSON backup before reinstalling or changing devices. You can restore a JSON backup or an earlier gwt CSV export.</p></div><div class="backup-actions"><button class="secondary-button" data-action="backup-json">Download JSON backup</button><button class="secondary-button" data-action="restore-json">Restore JSON</button><button class="secondary-button" data-action="restore-csv">Restore CSV</button></div><input id="backupFileInput" type="file" accept="application/json,.json" hidden><input id="backupCsvInput" type="file" accept="text/csv,.csv" hidden></section>`;
     if(!items.length) return html+`<div class="empty-state">No saved workout records are visible in this app storage. If you have an earlier JSON backup or gwt CSV export, use Restore JSON or Restore CSV. If the old installation's browser data was deleted and no backup exists, the app cannot retrieve it remotely.</div>`;
     html+=`<div class="history-list">${items.map(session=>{
@@ -591,6 +642,10 @@
         current.updatedAt=Math.max(Number(current.updatedAt)||0,Number(backupSession.updatedAt)||0)||null;
       }
       if(incoming.unit) store.unit=incoming.unit;
+      if(incoming.notes && typeof incoming.notes==='object') {
+        Object.entries(incoming.notes).forEach(([id,text])=>{ if(typeof text==='string' && text.trim() && !(store.notes[id]||'').trim()) store.notes[id]=text; });
+      }
+      migrateStore(store);
       saveStore(); render(); showToast(`Backup restored · ${added} added, ${merged} merged`);
     } catch (_) { showToast('Could not restore this file. Choose a gwt JSON backup.'); }
   }
@@ -645,52 +700,160 @@
     } catch (_) { showToast('Could not restore this CSV. Choose a gwt workout export.'); }
   }
 
-  function renderTimer() {
-    const dock=$('#timerDock'); const t=store.timer;
-    if(!t) { dock.hidden=true; return; }
-    dock.hidden=false;
-    $('#timerLabel').textContent=t.label || 'Rest timer';
-    $('#timerValue').textContent=formatRemaining(remainingMs(t));
-    if(t.paused && t.remainingMs<=0) {
-      $('#timerLabel').textContent='Rest complete';
-      $('#timerControls').innerHTML='<button data-action="enable-notifications">Alerts</button><button class="timer-dismiss" data-action="timer-dismiss">Done</button>';
-    } else if(t.paused) {
-      $('#timerControls').innerHTML='<button data-action="enable-notifications">Alerts</button><button data-action="timer-resume">Resume</button><button data-action="timer-reset">Reset</button>';
-    } else {
-      $('#timerControls').innerHTML='<button data-action="enable-notifications">Alerts</button><button data-action="timer-pause">Pause</button><button data-action="timer-reset">Reset</button>';
+  // ---------- Rest timer ----------
+  // The rest is played as ONE generated audio file: <rest seconds of silence> followed by an alarm.
+  // While it plays, Chrome treats the page as a media player: the app is kept alive, a lock-screen media
+  // control appears, and the alarm is sounded by the media pipeline itself (no JS timer needed to fire it).
+  const SAMPLE_RATE = 8000;
+  const ALARM_SEC = 6;
+  const restAudio = new Audio();
+  restAudio.preload = 'auto';
+  const wavUrls = new Map();
+
+  function buildRestWav(silenceSec) {
+    const silence = Math.round(silenceSec * SAMPLE_RATE);
+    const alarm = ALARM_SEC * SAMPLE_RATE;
+    const total = silence + alarm;
+    const buf = new ArrayBuffer(44 + total * 2);
+    const view = new DataView(buf);
+    const text = (off, s) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+    text(0, 'RIFF'); view.setUint32(4, 36 + total * 2, true); text(8, 'WAVE'); text(12, 'fmt ');
+    view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+    view.setUint32(24, SAMPLE_RATE, true); view.setUint32(28, SAMPLE_RATE * 2, true); view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+    text(36, 'data'); view.setUint32(40, total * 2, true);
+    const pcm = new Int16Array(buf, 44, total);
+    // "Silence" is +-1 LSB (about -90 dB, inaudible) so the stream is never pure digital zero.
+    for (let i = 0; i < silence; i++) pcm[i] = (i & 1) ? 1 : -1;
+    // Alarm: 4 groups of 3 beeps (1175 / 1568 Hz alternating), 1.5 s apart, with short fades to avoid clicks.
+    for (let i = 0; i < alarm; i++) {
+      const t = i / SAMPLE_RATE, g = t % 1.5;
+      let v = 0;
+      if (g < 0.9) {
+        const b = g % 0.3;
+        if (b < 0.18) {
+          const env = Math.min(1, b / 0.01, (0.18 - b) / 0.02);
+          const f = Math.floor(g / 0.3) % 2 === 0 ? 1175 : 1568;
+          v = Math.sin(2 * Math.PI * f * t) * env * 0.75;
+        }
+      }
+      pcm[silence + i] = Math.round(v * 32767);
     }
+    return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
   }
+  function restWavUrl(sec) { if (!wavUrls.has(sec)) wavUrls.set(sec, buildRestWav(sec)); return wavUrls.get(sec); }
+  function setMediaMetadata(title) {
+    if (!('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
+    try { navigator.mediaSession.metadata = new MediaMetadata({ title, artist:'Rest timer', album:'gwt', artwork:[{ src:'icon-192.png', sizes:'192x192', type:'image/png' }] }); } catch (_) {}
+  }
+  function setupMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+    const on = (action, fn) => { try { navigator.mediaSession.setActionHandler(action, fn); } catch (_) {} };
+    on('play', resumeTimer); on('pause', pauseTimer); on('stop', dismissTimer);
+    on('seekto', () => {}); // the lock-screen bar is display-only; scrubbing would desync the timer
+  }
+  function playRestAudio(sec, offsetSec = 0, label = 'Rest timer', force = false) {
+    if (!store.prefs.lockAudio && !force) return;
+    try {
+      const url = restWavUrl(sec);
+      if (restAudio.dataset.src !== url) { restAudio.src = url; restAudio.dataset.src = url; }
+      restAudio.currentTime = offsetSec;
+      const p = restAudio.play(); if (p && p.catch) p.catch(() => {});
+      setMediaMetadata(label);
+    } catch (_) {}
+  }
+  function stopRestAudio() {
+    try {
+      restAudio.pause(); restAudio.removeAttribute('src'); delete restAudio.dataset.src; restAudio.load();
+      if ('mediaSession' in navigator) navigator.mediaSession.metadata = null;
+    } catch (_) {}
+  }
+  // After a page reload the browser blocks autoplay; the first tap restores the audio at the right offset.
+  function resumeAudioIfNeeded() {
+    const t = store.timer;
+    if (!t || t.paused || !store.prefs.lockAudio || !restAudio.paused) return;
+    const left = remainingMs(t); if (left <= 0) return;
+    playRestAudio(timerSeconds(t), (t.durationMs - left) / 1000, t.label);
+  }
+  function syncTimerToAudio() {
+    const t = store.timer;
+    if (!t || t.paused || !store.prefs.lockAudio) return;
+    const left = t.durationMs - restAudio.currentTime * 1000;
+    if (left > 0 && Math.abs(left - remainingMs(t)) > 150) { t.endAt = Date.now() + left; saveStore(); }
+  }
+
+  function notificationState() {
+    if (!('Notification' in window)) return 'unsupported';
+    return { granted:'allowed', denied:'blocked', default:'not asked yet' }[Notification.permission] || 'unknown';
+  }
+  function timerSeconds(t) { return Math.round(t.durationMs / 1000); }
   function remainingMs(t) { if(!t) return 0; return t.paused ? Math.max(0,t.remainingMs||0) : Math.max(0,(t.endAt||Date.now())-Date.now()); }
   function formatRemaining(ms) { const sec=Math.max(0,Math.ceil(ms/1000)); return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`; }
+  function ensureTicking() {
+    const need = !!(store.timer && !store.timer.paused);
+    if (need && !tickHandle) tickHandle = setInterval(tickTimer, 1000);
+    else if (!need && tickHandle) { clearInterval(tickHandle); tickHandle = null; }
+  }
+  function renderTimer() {
+    const dock=$('#timerDock'); const t=store.timer;
+    if(!t) { dock.hidden=true; dock.classList.remove('is-finished'); ensureTicking(); return; }
+    const finished=t.paused && t.remainingMs<=0;
+    dock.hidden=false; dock.classList.toggle('is-finished',finished);
+    $('#timerLabel').textContent=finished?'Rest complete · next set':(t.label || 'Rest timer');
+    $('#timerValue').textContent=formatRemaining(remainingMs(t));
+    const alerts=notificationState()==='not asked yet'?'<button data-action="enable-notifications">Alerts</button>':'';
+    $('#timerControls').innerHTML=finished
+      ? '<button class="timer-dismiss" data-action="timer-dismiss">Done</button>'
+      : t.paused
+        ? `${alerts}<button data-action="timer-resume">Resume</button><button data-action="timer-reset">Reset</button>`
+        : `${alerts}<button data-action="timer-pause">Pause</button><button data-action="timer-reset">Reset</button>`;
+    ensureTicking();
+  }
   function startTimer(seconds,label='Rest timer') {
     const duration=Math.max(1,Number(seconds)||120)*1000;
-    store.timer={durationMs:duration,endAt:Date.now()+duration,remainingMs:duration,paused:false,label,startedAt:Date.now()}; saveStore(); renderTimer();
+    store.timer={durationMs:duration,endAt:Date.now()+duration,remainingMs:duration,paused:false,label,startedAt:Date.now(),runId:`${Date.now()}-${Math.random()}`};
+    saveStore(); renderTimer();
+    playRestAudio(timerSeconds(store.timer),0,label); // must run inside the tap that started the rest
   }
-  function pauseTimer() { if(!store.timer || store.timer.paused)return; store.timer.remainingMs=remainingMs(store.timer); store.timer.paused=true; store.timer.endAt=null; saveStore(); renderTimer(); }
-  function resumeTimer() { if(!store.timer || !store.timer.paused || store.timer.remainingMs<=0)return; store.timer.paused=false; store.timer.endAt=Date.now()+store.timer.remainingMs; saveStore(); renderTimer(); }
-  function resetTimer() { if(!store.timer)return; store.timer.remainingMs=store.timer.durationMs; store.timer.endAt=Date.now()+store.timer.durationMs; store.timer.paused=false; saveStore(); renderTimer(); }
+  function pauseTimer() {
+    const t=store.timer; if(!t || t.paused) return;
+    t.remainingMs=remainingMs(t); t.paused=true; t.endAt=null; saveStore(); renderTimer();
+    try { restAudio.pause(); } catch (_) {}
+  }
+  function resumeTimer() {
+    const t=store.timer; if(!t || !t.paused || t.remainingMs<=0) return;
+    t.paused=false; t.endAt=Date.now()+t.remainingMs; saveStore(); renderTimer();
+    playRestAudio(timerSeconds(t),(t.durationMs-t.remainingMs)/1000,t.label);
+  }
+  function resetTimer() {
+    const t=store.timer; if(!t) return;
+    t.remainingMs=t.durationMs; t.endAt=Date.now()+t.durationMs; t.paused=false; t.runId=`${Date.now()}-${Math.random()}`; saveStore(); renderTimer();
+    playRestAudio(timerSeconds(t),0,t.label);
+  }
+  function dismissTimer() { store.timer=null; saveStore(); renderTimer(); stopRestAudio(); }
   function tickTimer() {
-    if(!store.timer || store.timer.paused) return;
-    const left=remainingMs(store.timer);
+    const t=store.timer; if(!t || t.paused) return;
+    const left=remainingMs(t);
     $('#timerValue').textContent=formatRemaining(left);
-    if(left<=0) {
-      store.timer.remainingMs=0; store.timer.endAt=null; store.timer.paused=true; saveStore(); renderTimer();
-      alertTimerFinished();
-      return;
-    }
+    if(left<=0) finishTimer();
+  }
+  function finishTimer() {
+    const t=store.timer; if(!t) return;
+    t.remainingMs=0; t.endAt=null; t.paused=true; saveStore(); renderTimer(); alertTimerFinished();
+  }
+  function showRestNotification(title, body) {
+    const opts={body,icon:'./icon-192.png',badge:'./icon-192.png',tag:'gwt-rest',renotify:true,vibrate:[300,120,300,120,500],data:{url:'./'}};
+    if(serviceWorkerRegistration?.showNotification) serviceWorkerRegistration.showNotification(title,opts).catch(()=>{});
+    else { try { new Notification(title,opts); } catch(_) {} }
   }
   function alertTimerFinished() {
-    const timer=store.timer;
-    if(!timer || lastTimerAlertId===timer.startedAt) return;
-    lastTimerAlertId=timer.startedAt;
-    try { if('vibrate' in navigator) navigator.vibrate([220,100,220,100,350]); } catch(_) {}
-    const title='Rest finished';
-    const body=`${timer.label || 'Your rest timer'} is complete. Time for your next set.`;
-    if('Notification' in window && Notification.permission==='granted') {
-      if(serviceWorkerRegistration?.showNotification) serviceWorkerRegistration.showNotification(title,{body,icon:'./icon-192.png',badge:'./icon-192.png',tag:'gwt-rest',renotify:true,data:{url:'./'}}).catch(()=>{});
-      else { try { new Notification(title,{body,icon:'./icon-192.png'}); } catch(_) {} }
-    }
+    const t=store.timer;
+    if(!t || lastAlertRun===t.runId) return;
+    lastAlertRun=t.runId;
+    try { if('vibrate' in navigator) navigator.vibrate([300,120,300,120,500]); } catch(_) {}
+    // If the lock-screen track is not playing (setting off, or autoplay was blocked), sound the alarm on its own.
+    if(restAudio.paused || restAudio.ended) playRestAudio(0,0,'Rest finished',true);
     if(document.visibilityState==='visible') showToast('Rest complete — get ready for your next set');
+    else if(notificationState()==='allowed') showRestNotification('Rest finished', `${t.label || 'Your rest timer'} is complete. Time for your next set.`);
   }
   async function enableNotifications() {
     if(!('Notification' in window)) { showToast('Notifications are not supported in this browser'); return; }
@@ -698,11 +861,15 @@
       const permission=await Notification.requestPermission();
       showToast(permission==='granted'?'Rest alerts enabled':permission==='denied'?'Notifications blocked in browser settings':'Notification permission not granted');
     } catch(_) { showToast('Could not enable notifications'); }
+    renderTimer(); if(activeTab==='history') render();
+  }
+  function setLockAudio(on) {
+    store.prefs.lockAudio=!!on; saveStore();
+    if(on) resumeAudioIfNeeded(); else stopRestAudio();
   }
   function checkExpiredTimerOnReturn() {
-    if(store.timer && !store.timer.paused && remainingMs(store.timer)<=0) {
-      store.timer.remainingMs=0; store.timer.endAt=null; store.timer.paused=true; saveStore(); renderTimer(); alertTimerFinished();
-    }
+    const t=store.timer;
+    if(t && !t.paused && remainingMs(t)<=0) finishTimer();
   }
   function showToast(message) {
     const el=$('#toast'); el.textContent=message; el.classList.add('show'); clearTimeout(toastTimeout); toastTimeout=setTimeout(()=>el.classList.remove('show'),1900);
@@ -722,28 +889,37 @@
     return {workout,session:getSession(el.dataset.date,workout)};
   }
   function updateSetField(el) {
-    const {workout,session}=getSessionFromDataset(el); if(!workout||!session)return;
+    const {workout,session}=getSessionFromDataset(el) || {}; if(!workout||!session)return;
     const index=Number(el.dataset.index); const exerciseId=el.dataset.exercise; const field=el.dataset.field;
     if(!session.sets[exerciseId] || !session.sets[exerciseId][index])return;
     session.sets[exerciseId][index][field]=el.value;
-    session.updatedAt=Date.now(); saveStore();
+    session.updatedAt=Date.now(); scheduleSave();
+  }
+  function updateNote(el) {
+    const id=el.dataset.exercise; if(!id) return;
+    if(el.value.trim()) store.notes[id]=el.value; else delete store.notes[id];
+    scheduleSave();
+  }
+  // Ticking a set only touches that row, the progress hero and the weekly stats (no full re-render).
+  function refreshSummary(workout,session) {
+    const hero=$('.session-hero'); if(hero) hero.outerHTML=renderSessionHero(workout,session,session.date);
+    const week=$('.week-overview'); if(week) week.outerHTML=renderWeekOverview();
   }
   function toggleSet(el) {
-    const {workout,session}=getSessionFromDataset(el); if(!workout||!session)return;
+    const {workout,session}=getSessionFromDataset(el) || {}; if(!workout||!session)return;
     const index=Number(el.dataset.index); const exerciseId=el.dataset.exercise; if(!session.sets[exerciseId]||!session.sets[exerciseId][index])return;
-    const set=session.sets[exerciseId][index]; set.done=el.checked; session.updatedAt=Date.now(); saveStore();
-    if(el.checked) {
-      const rows=getSetRows(session,workout);
-      if(!rows.every(r=>r.set.done)) {
-        const ex=workout.exercises.find(x=>x.id===exerciseId);
-        startTimer(ex?.rest || 120, `${ex?.name || 'Set'} · rest`);
-      }
-    }
-    render();
+    const set=session.sets[exerciseId][index]; set.done=el.checked; session.updatedAt=Date.now();
+    el.closest('.set-row')?.classList.toggle('is-done',set.done);
+    if(el.checked && !getSetRows(session,workout).every(r=>r.set.done)) {
+      const ex=workout.exercises.find(x=>x.id===exerciseId);
+      startTimer(ex?.rest || 120, `${ex?.name || 'Set'} · rest`); // saves too
+    } else saveStore();
+    refreshSummary(workout,session);
   }
   function clearExercise(el) {
-    const {workout,session}=getSessionFromDataset(el); if(!workout||!session)return;
+    const {workout,session}=getSessionFromDataset(el) || {}; if(!workout||!session)return;
     const exerciseId=el.dataset.exercise; const ex=workout.exercises.find(x=>x.id===exerciseId); if(!ex)return;
+    if(session.sets[exerciseId]?.some(isSetLogged) && !confirm(`Clear today's sets for ${ex.name}?`)) return;
     session.sets[exerciseId]=Array.from({length:ex.sets},()=>({weight:'',reps:'',rir:'',done:false})); session.updatedAt=Date.now(); saveStore(); render(); showToast('Exercise sets cleared');
   }
   function exportCsv() {
@@ -765,27 +941,44 @@
     const action=actionEl.dataset.action;
     if(action==='go-tab') setActiveTab(actionEl.dataset.tab);
     else if(action==='start-rest') startTimer(Number(actionEl.dataset.seconds), `${actionEl.dataset.label} · rest`);
-    else if(action==='toggle-set') { /* handled by the checkbox change event */ }
     else if(action==='clear-exercise') clearExercise(actionEl);
     else if(action==='timer-pause') pauseTimer();
     else if(action==='timer-resume') resumeTimer();
     else if(action==='timer-reset') resetTimer();
-    else if(action==='timer-dismiss') { store.timer=null; saveStore(); renderTimer(); }
+    else if(action==='timer-dismiss') dismissTimer();
+    else if(action==='test-timer') startTimer(10,'Test · rest');
     else if(action==='enable-notifications') enableNotifications();
     else if(action==='export-csv') exportCsv();
     else if(action==='backup-json') exportJsonBackup();
     else if(action==='restore-json') $('#backupFileInput')?.click();
     else if(action==='restore-csv') $('#backupCsvInput')?.click();
   });
-  document.addEventListener('input', event=>{const el=event.target.closest('[data-action="set-field"]');if(el)updateSetField(el);});
-  document.addEventListener('change', event=>{
-    const el=event.target.closest('[data-action="set-field"]'); if(el) updateSetField(el);
-    if(event.target.id==='progressSelect') { selectedProgress=event.target.value; render(); }
+  document.addEventListener('input', event=>{
+    const action=event.target.dataset?.action;
+    if(action==='set-field') updateSetField(event.target);
+    else if(action==='note-field') updateNote(event.target);
   });
-  document.addEventListener('change', event=>{const el=event.target.closest('[data-action="toggle-set"]'); if(el)toggleSet(el);});
-  document.addEventListener('change', event=>{ if(event.target.id==='backupFileInput' && event.target.files?.[0]) { const file=event.target.files[0]; importJsonBackup(file).finally(()=>{ event.target.value=''; }); } if(event.target.id==='backupCsvInput' && event.target.files?.[0]) { const file=event.target.files[0]; importCsvBackup(file).finally(()=>{ event.target.value=''; }); } });
+  document.addEventListener('change', event=>{
+    const el=event.target; const action=el.dataset?.action;
+    if(action==='set-field') updateSetField(el);
+    else if(action==='toggle-set') toggleSet(el);
+    else if(action==='note-field') updateNote(el);
+    else if(action==='pref-lock-audio') setLockAudio(el.checked);
+    else if(el.id==='progressSelect') { selectedProgress=el.value; render(); }
+    else if(el.id==='backupFileInput' && el.files?.[0]) importJsonBackup(el.files[0]).finally(()=>{ el.value=''; });
+    else if(el.id==='backupCsvInput' && el.files?.[0]) importCsvBackup(el.files[0]).finally(()=>{ el.value=''; });
+  });
+  // Autoplay is blocked after a reload; the first tap re-attaches the rest audio to a running timer.
+  document.addEventListener('pointerup', resumeAudioIfNeeded, true);
+  restAudio.addEventListener('playing', syncTimerToAudio);
+  restAudio.addEventListener('ended', ()=>{ if(store.timer && !store.timer.paused) finishTimer(); });
   window.addEventListener('online',()=>{$('#connectionLabel').textContent='Saved on device';});
   window.addEventListener('offline',()=>{$('#connectionLabel').textContent='Offline · local save';});
+  window.addEventListener('pagehide', flushSave);
+  window.addEventListener('pageshow', checkExpiredTimerOnReturn);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible') checkExpiredTimerOnReturn(); else flushSave();
+  });
   if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     let hadController=!!navigator.serviceWorker.controller;
     let reloadingForUpdate=false;
@@ -815,10 +1008,15 @@
   if(navigator.storage && typeof navigator.storage.persist==='function') {
     navigator.storage.persist().catch(()=>{});
   }
-  if(store.timer && !store.timer.paused && remainingMs(store.timer)<=0) { store.timer.remainingMs=0; store.timer.endAt=null; store.timer.paused=true; saveStore(); }
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkExpiredTimerOnReturn();});
-  window.addEventListener('pageshow',checkExpiredTimerOnReturn);
-  render(); timerInterval=setInterval(tickTimer,1000);
+  // A timer that expired while the app was closed is shown as finished, without replaying the alert.
+  if(store.timer) {
+    if(store.timer.runId==null) store.timer.runId=String(store.timer.startedAt || Date.now());
+    if(!store.timer.paused && remainingMs(store.timer)<=0) {
+      store.timer.remainingMs=0; store.timer.endAt=null; store.timer.paused=true; lastAlertRun=store.timer.runId; saveStore();
+    }
+  }
+  setupMediaSession();
+  render();
 })();
 </script>
 </body>

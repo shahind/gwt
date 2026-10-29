@@ -1,5 +1,5 @@
 /* gwt service worker. Increment CACHE_NAME for each published build. */
-const CACHE_NAME = 'gwt-pwa-v5';
+const CACHE_NAME = 'gwt-pwa-v6';
 const APP_PREFIX = 'gwt-pwa-';
 const APP_ASSETS = [
   './',
